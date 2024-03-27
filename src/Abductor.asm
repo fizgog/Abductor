@@ -142,7 +142,7 @@ ORG NATIVE_ADDR
 
         LDA #$80                ; Not used in the Beeb
         JMP TitleScreen
-        ; return and exit game
+        ; Return and exit game
 
 ;----------------------------------------------------------------------------
 ;
@@ -153,7 +153,7 @@ ORG NATIVE_ADDR
 .NextLevel                      ; L1022
         JSR ClearScreen         ; S1067
         JMP InitialiseGame      ; L1087
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 
@@ -223,7 +223,7 @@ ORG NATIVE_ADDR
         STA DOTTED_LINE_ADDRESS,Y   ; STA $1FCD,Y
         DEY
         BNE L1080                   ; loop back
-        RTS                         ; return
+        RTS                         ; Return
 
 ;----------------------------------------------------------------------------
 ; InitialiseGame ; L1087
@@ -294,7 +294,7 @@ ORG NATIVE_ADDR
         NOP:NOP:NOP:NOP         ; Why?
 
         JMP GameLoop            ; L1108
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; CalcAddress ; S10E0
@@ -304,12 +304,12 @@ ORG NATIVE_ADDR
         LDY spriteXPos  ; ZP02 - not used in this function
 
         ;LDA $0040,X
-        NOP             ; BeebEm cannot do $0000,X
+        NOP             ; BeebEm cannot do $00??,X
         LDA ZP40,X
         STA ZP00
 
         ;LDA $0058,X
-        NOP             ; BeebEm cannot do $0000,X
+        NOP             ; BeebEm cannot do $00??,X
         LDA ZP58,X
         STA ZP01
         RTS
@@ -329,7 +329,7 @@ ORG NATIVE_ADDR
         STA ZP01                ;
         LDA ZP05                ; 
         STA (ZP00),Y            ; Plot to screen address
-        RTS                     ; exit
+        RTS                     ; Exit
 ;----------------------------------------------------------------------------
 ; GetCharacter ; S1102
 ;----------------------------------------------------------------------------
@@ -347,8 +347,8 @@ ORG NATIVE_ADDR
         JSR UpdateMissile       ; S1306
         JSR UpdateMissile2      ; S1363
         JSR ProcessSound1       ; S1421
-        JSR Function6           ; S1489 Take people
-        JSR Function7           ; S159B
+        JSR ProcessHumanoid     ; S1489 
+        JSR UpdateHumanoid      ; S159B
         JSR ProcessSound2       ; S1603
         JMP L1B00
 ;----------------------------------------------------------------------------
@@ -427,11 +427,11 @@ NOP
         AND #$04                ; Right pressed
         BEQ L117C               ; Yes then branch
         DEC shipFrame           ; ZP09
-        BNE L1170               ; exit
+        BNE L1170               ; Exit
         LDA #$02                ; set single ship to 2 chars
         STA shipFrame           ; ZP09
         JMP L1171               ; Ship going left
-        ; return
+        ; Return
 
 .L1170
         RTS
@@ -442,21 +442,21 @@ NOP
         CMP #$00                ; player min width 0
         BNE L1198               ; No
         JMP L118E               ; Use right code to move it right by 1
-        ; return
+        ; Return
 
 .L117C
         JMP L11F4
-        ; return
+        ; Return
 
 .L117F
         NOP:NOP:NOP             ; delay?
 
         CMP #$03
-        BNE L118D               ; exit
+        BNE L118D               ; Exit
         LDA #$01
         STA shipFrame           ; ZP09
         JMP L118E
-        ; return
+        ; Return
 
 .L118D
         RTS
@@ -470,7 +470,7 @@ NOP
 
 .L1198
         JMP L11FD
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; ProcessShip1  ; L119B
@@ -507,7 +507,7 @@ NOP
         LDA currentPlayerXPos   ; ZP07
         STA spriteXPos          ; ZP02
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; SingleShip2Chars ; L11CB
@@ -522,7 +522,7 @@ NOP
         LDA #SINGLE_SHIPH2      ; '>' right half ship 
         STA currentSprite       ; ZP04
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; ProcessShip ; S11DF
@@ -534,7 +534,7 @@ NOP
 
 .S11E4
         JMP ProcessShip1        ; L119B
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ;
@@ -549,7 +549,7 @@ NOP
         LDA currentPlayerXPos   ; ZP07
         STA spriteXPos          ; ZP02
         JMP SingleShip2Chars         ; L11CB return back to plotting ship
-        ; return
+        ; Return
 ;----------------------------------------------------------------------------
 
 .L11F4
@@ -567,7 +567,7 @@ NOP
         INC shipFrame           ; ZP09
         LDA shipFrame           ; ZP09
         JMP L117F
-        ; return
+        ; Return
 
         RTS
         NOP                     ; not used
@@ -763,7 +763,7 @@ NOP
         CMP #$01
         BEQ L135C
 .L130C
-        RTS                     ; exit UpdateMissile
+        RTS                     ; Exit UpdateMissile
 
 .L130D
         LDA ZP80
@@ -782,7 +782,7 @@ NOP
         LDA #$07
         STA ZP05
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
 .L132E
         LDA #BLANK              ; SPACE
@@ -793,7 +793,7 @@ NOP
         BNE L133F
         LDA #$00
         STA Missile1            ; ZP11 Reset missile fireing??
-        RTS                     ; exit UpdateMissile
+        RTS                     ; Exit UpdateMissile
 
 .L133F
         LDA ZP81
@@ -810,13 +810,13 @@ NOP
         LDA #$07
         STA ZP05                ; STL
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
 .L135C
         LDA Missile1 ; ZP11
         BEQ L130C
         JMP L130D
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; UpdateMissile2 ; S1363
@@ -826,15 +826,15 @@ NOP
         CMP #$01                ; Odd frame rate?
         BEQ L136A               ; Yes then branch
 .L1369
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L136A
         LDA Missile2            ; ZP12
-        BEQ L1369               ; exit
+        BEQ L1369               ; Exit
         LDA shipSize            ; ZP08
         CMP #$02                ; Double Ship?
         BEQ L1375               ; Yes so branch
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1375
         LDA missileYPos         ; ZP86
@@ -888,7 +888,7 @@ NOP
         BNE L13D3
         LDA #$00
         STA Missile2            ; ZP12
-        RTS                     ; return
+        RTS                     ; Return
 
 .L13D3
         STA spriteYPos          ; ZP03
@@ -911,7 +911,7 @@ NOP
         LDA missileXPos         ; ZP84
         CMP #$9F
         BNE L13FB
-        RTS                     ; return
+        RTS                     ; Return
 
 .L13FB
         STA spriteXPos          ; ZP02
@@ -933,7 +933,7 @@ NOP
         STA $0901               ; VIC.VICCRB  ; Sound Alto
         LDA #$F2                ; %1111 0010
         STA $0902               ; VIC.VICCRC  ; Sound Soprano
-        RTS                     ; exit
+        RTS                     ; Exit
 
 ;----------------------------------------------------------------------------
 ; ProcessSound1 ; S1421
@@ -942,31 +942,31 @@ NOP
         LDA MissileFrameRate    ; ZP13
         CMP #$01
         BEQ L1428
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1428
         LDA $0902               ; VIC.VICCRC  ; Sound Soprano
         AND #$80
         BNE L1440
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1430
         DEC $0902               ; VIC.VICCRC  ; Sound Soprano
         DEC $0901               ; VIC.VICCRB  ; Sound Alto
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1437
         LDA #$00
         STA $0901               ; VIC.VICCRB  ; Sound Alto
         STA $0902               ; VIC.VICCRC  ; Sound Soprano
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1440
         LDA $0902               ; VIC.VICCRC  ; Sound Soprano
         CMP #$C0
         BNE L1430
         JMP L1437
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; InitialiseHumanoids ; S144A
@@ -976,14 +976,14 @@ NOP
         LDY #$00
 .L144C
         LDA #ROW_OF_MEN         ; Row 22 position of Humanoids
-        STA ZP70,Y              ; row address
+        STA ZP70,Y              ; Row address
         LDA #$00
         STA ZP71,Y              ; Set Humanoid Action State to 0 (SAFE)
         INY
         INY
         CPY #$0C                ; 12
         BNE L144C               ; = 12, No then loop
-        RTS                     ; exit
+        RTS                     ; Exit
 }
  ;----------------------------------------------------------------------------
 
@@ -999,51 +999,51 @@ NOP
         INY
         CPY #$0C
         BNE L145F
-        RTS
+        RTS                     ; Exit
 
 .S146D
         LDA ZP71,Y              ; Get Humanoid Action State
-        BNE L1486
-        LDA ZP70,Y              ; row address
+        BNE L1486               ; Not 0 (SAFE) then branch
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
         TYA
         ASL A
         STA spriteXPos          ; ZP02
-        LDA #HUMANOID           ; #$1A ; Humanoid?
+        LDA #HUMANOID           ; Humanoid
         STA currentSprite       ; ZP04
         LDA #$01
         STA ZP05
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
 .L1486
         JMP L1490
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
-; Function 6
+; ProcessHumanoid ; S1489
 ;----------------------------------------------------------------------------
-.Function6 ; S1489
+.ProcessHumanoid 
         LDA MissileFrameRate    ; ZP13
         CMP #$01
         BEQ L150B
-        RTS                     ; exit function6
+        RTS                     ; Exit
 
 .L1490
         STY ZP19
         LDA ZP71,Y              ; Get Humanoid Action State
-        CMP #$FF
-        BNE L149A
-        RTS                     ; exit function6
+        CMP #$FF                ; Humanoid Destroyed?
+        BNE L149A               ; No then branch
+        RTS                     ; Exit
 
 .L149A
         CMP #$01
         BEQ L14A1
         JMP L151E
-        ; return
+        ; Return
 
 .L14A1
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         CMP #ROW_OF_MEN         ; Row 22 position of Humanoids
         BNE L14BA
         STA spriteYPos          ; ZP03
@@ -1054,9 +1054,9 @@ NOP
         LDA #BLANK              ; SPACE
         JSR S17BA
         NOP
-        STA ZP70,Y              ; row address
+        STA ZP70,Y              ; Row address
 .L14BA
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
         TYA
         ASL A
@@ -1080,19 +1080,19 @@ NOP
         TAY
         DEC ZP70,X : NOP        ; Handles $00??,X
 
-        LDA ZP70,Y              ; row address
-        CMP #$01                ; Man going up
-        BNE L14ED               ; !=1 then Man captured
+        LDA ZP70,Y              ; Row address
+        CMP #$01                ; Humanoid going up
+        BNE L14ED               ; !=1 then Humanoid captured
         LDA #$02                ; Skull falling down
         STA ZP71,Y              ; Set Humanoid Action State to 2 (FALLING)
         RTS
 
-.L14ED  ; Man captured and going up
+.L14ED  ; Humanoid captured and going up
         STA spriteYPos              ; ZP03
         TYA
         ASL A
         STA spriteXPos              ; ZP02
-        LDA #HUMANOID               ; #$1A ; Humanoid going up
+        LDA #HUMANOID               ; Humanoid going up
         STA currentSprite           ; ZP04
         LDA #$01
         STA ZP05
@@ -1101,9 +1101,9 @@ NOP
         STA currentSprite           ; ZP04
         LDA ZP18
         STA ZP05
-        DEC spriteYPos              ; ZP03 man_y = man_y -1
+        DEC spriteYPos              ; ZP03 man_y = man_y - 1
         JMP PlotSprite              ; L10EF
-        ; return
+        ; Return
 
 .L150B
         DEC ZP1A
@@ -1124,7 +1124,7 @@ NOP
         JMP L155F
 
 .L1525
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
         TYA
         ASL A
@@ -1169,7 +1169,7 @@ NOP
         RTS
 
 .L1567
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
         TYA
         ASL A
@@ -1181,7 +1181,7 @@ NOP
         TAX
         TAY
         INC ZP70,X : NOP        ; Handles $00??,X
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         CMP #$15
         BEQ L1590
         LDA #HUMANOID           ; #$1A; Humanoid
@@ -1189,24 +1189,24 @@ NOP
         LDA #$01
         STA ZP05
         JMP L18CA
-        ; return
+        ; Return
 
 .L1590
         LDA #ROW_OF_MEN         ; Row 22 position of Humanoids
-        STA ZP70,Y              ; row address
+        STA ZP70,Y              ; Row address
         LDA #$00
         JMP SaveHumanoid             ; L1A71
 
         RTS
 
 ;----------------------------------------------------------------------------
-; Function 7 ; S159B
+; UpdateHumanoid ; S159B
 ;----------------------------------------------------------------------------
-.Function7 
+.UpdateHumanoid 
         LDA MissileFrameRate    ; ZP13
         CMP #$02
         BEQ L15F7
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L15A2
         LDY #$00
@@ -1220,17 +1220,17 @@ NOP
         INY
         CPY #$0C
         BNE L15A4
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .S15B5
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         CMP #$01
         BNE L15C1
         LDA #$C0
         STA $0903               ; VIC.VICCRD  ; Sound Noise
 .L15C1
         STY ZP19
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
         TYA
         ASL A
@@ -1243,7 +1243,7 @@ NOP
         TAX
         INC ZP70,X : NOP        ; Handles $00??,X
 
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         CMP #$15                ; row 21
         BEQ L15F1               ; Yes
         STA spriteYPos          ; ZP03
@@ -1256,23 +1256,23 @@ NOP
 
         JSR CheckAlienHitShip   ; L19F4
         LDY ZP19
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L15F1
         LDA #$FF
         STA ZP71,Y              ; Set Humanoid Action State to FF (CAPTURED)
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L15F7
         DEC ZP1C
         BEQ L15FC
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L15FC
         LDA #$03
         STA ZP1C
         JMP L15A2
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; ProcessSound2 ; S1603
@@ -1283,16 +1283,16 @@ NOP
         BEQ L160A
 
 .L1609
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L160A
         LDA $0903               ; VIC.VICCRD  ; Sound Noise
         AND #$80
-        BEQ L1609               ; exit
+        BEQ L1609               ; Exit
         LDA $0903               ; VIC.VICCRD  ; Sound Noise
         SBC #$04
         STA $0903               ; VIC.VICCRD  ; Sound Noise
-        RTS                     ; exit
+        RTS                     ; Exit
 ;----------------------------------------------------------------------------
 ;
 ;----------------------------------------------------------------------------
@@ -1300,12 +1300,12 @@ NOP
         LDA ZP0A
         AND #$01
         BEQ L1621
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1621
         DEC ZP25
         BEQ L1626
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1626
         JSR S1705
@@ -1322,7 +1322,7 @@ NOP
         LDA ZP18
         STA ZP18                ; Why?
         JMP L19E2
-        ; return
+        ; Return
 
 .L1641
         TYA
@@ -1335,19 +1335,19 @@ NOP
         TAY
         DEY
         BNE L1641
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .S1651
         STX ZP27
         LDA AlienUnknown1Sprite,X
         BNE L1659
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1659
         CMP #$80
         BNE L1660
         JMP L17C1
-        ; return
+        ; Return
 
 .L1660
         LDA AlienXPosSprite,X
@@ -1377,7 +1377,7 @@ NOP
         ROR A
         ROR A
         JMP L16B7
-        ; return
+        ; Return
 
 .L1691
         INC AlienUnknown2Sprite,X
@@ -1396,12 +1396,12 @@ NOP
 .L16AD
         LDA #$00
         STA ZP22
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L16B2
         CMP #$00
         BEQ L16AD
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L16B7
         STA ZP00
@@ -1453,7 +1453,7 @@ NOP
         LDA #$02
         STA ZP2C
         JMP L1739
-        ; return
+        ; Return
 
 .L1710
         LDA ZP2A
@@ -1481,13 +1481,13 @@ NOP
 .L1739
         LDA ZP34
         STA ZP25
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .S173E
         STY ZP00
         ADC ZP00
         TAX
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1744
         LDA AlienXPosSprite,X
@@ -1502,15 +1502,22 @@ NOP
         LDX ZP27
         LDA AlienUnknown2Sprite,X
         JMP L1765
-        ; return
+        ; Return
 
-.L175D
-        LDA #$01
+;----------------------------------------------------------------------------
+; GameOver ; L175D
+;----------------------------------------------------------------------------
+.GameOver
+        LDA #$01                ; Set lives to 1
         STA livesLeft           ; ZP38
-        JMP L1A04
-        ; return
+        JMP LoseLife            ; L1A04
+        ; Return
 
+;----------------------------------------------------------------------------
         NOP                     ; Not used
+;----------------------------------------------------------------------------
+;
+;----------------------------------------------------------------------------
 .L1765
         CLC
         ASL A
@@ -1533,19 +1540,19 @@ NOP
         LDA AlienXPosSprite,X
         CMP ZP2E
         BEQ L178F
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L178F
         LDA AlienYPosSprite,X
         CMP #$14
         BEQ L1797
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1797
         LDA AlienUnknown2Sprite,X
         CMP #$FF
         BNE L179F
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L179F
         LDA #BLANK              ; SPACE
@@ -1560,25 +1567,25 @@ NOP
         LDA #$01
         STA ZP71,X              ; Set Humanoid Action State to 1 (TAKEN)
         NOP                     ; Handles $00??,X
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .S17B4
         JSR S16DB
         LDX ZP27
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .S17BA
         STA (ZP00),Y            ; Plot to screen address
         LDY ZP19
         LDA #$14
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L17C1
         LDA AlienUnknown2Sprite,X
         CMP #$22
         BEQ L17CB
         JMP L1744
-        ; return
+        ; Return
 
 .L17CB
         LDA AlienCtrlSprite,X
@@ -1597,27 +1604,27 @@ NOP
         LDA AlienCtrlSprite,X
         CMP #$1F
         BEQ HitAlien            ; L17EE
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .HitAlien                       ; L17EE
         LDA #$00
         JMP DestroyAlien        ; L1A65
-        ; return
+        ; Return
 
-        RTS                     ; exit but not used
+        RTS                     ; Exit but not used
 .S17F4
         STA ZP30
         LDA #$01
         STA ZP31
         JMP L180C
-        ; return
+        ; Return
 
 .S17FD
         STA ZP30
         LDA #$02
         STA ZP31
         JMP L180C
-        ; return
+        ; Return
 
 .S1806
         STA ZP30
@@ -1628,7 +1635,7 @@ NOP
         CMP ZP17
         BEQ L1815
         JMP L1892
-        ; return
+        ; Return
 
 .L1815
         LDY ZP23
@@ -1648,7 +1655,7 @@ NOP
         NOP
         DEY
         BNE L1817
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L182D
         LDA AlienYPosSprite,X
@@ -1673,7 +1680,7 @@ NOP
         STA Missile1            ; ZP11        ; Reset missile fireing??
         PLA                     ; Why?
         PLA                     ; WHY?
-        RTS                     ; exit
+        RTS                     ; Exit
 
         ; Data?
         ; 1858
@@ -1699,16 +1706,16 @@ NOP
         LDA ZP85
         STA spriteXPos          ; ZP02
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 .L1892
         CMP #HUMANOID           ; #$1A; Humanoid
         BEQ L1897               ; = Humanoid then branch
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1897
         LDY #$00
 .L1899
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         CMP spriteYPos          ; ZP03
         BEQ L18A6
 .L18A0
@@ -1728,18 +1735,18 @@ NOP
         LDA #$F8
         STA $0903               ; VIC.VICCRD      ; Sound Noise
         JMP L184B
-        ; return
+        ; Return
 
         ; 18BD
         EQUB $01,$D0,$05,$A9,$00,$85,$11,$60,$A9,$00,$85,$12,$60
 
 .L18CA
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 .S18D2
-        LDA ZP70,Y              ; row address
+        LDA ZP70,Y              ; Row address
         STA spriteYPos          ; ZP03
 
         TYA
@@ -1750,7 +1757,7 @@ NOP
         STA currentSprite       ; ZP04
         DEC spriteYPos          ; ZP03
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ;
@@ -1799,29 +1806,32 @@ NOP
         LDA ZP33
         CMP #$05
         BPL L1925
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1925
         LDA #$02
         STA shipSize            ; ZP08
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L192A
         LDA #$10
         JMP L18E8
-        ; return
+        ; Return
 
 .L192F
         STA ZP2A
         STA ZP2B
         JMP L191A
-        ; return
+        ; Return
 
+;----------------------------------------------------------------------------
+;
+;----------------------------------------------------------------------------
 .S1936
         LDA ZP25
         CMP #$01
         BEQ L193D
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L193D
         LDY ZP23
@@ -1838,10 +1848,10 @@ NOP
         DEY
         BNE L193F
         JMP L1954
-        ; return
+        ; Return
 
 .L1953
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1954
         LDA ZP2A
@@ -1852,7 +1862,7 @@ NOP
         BEQ L1964
         CMP #$FF
         BEQ L1964
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1964
         INY
@@ -1864,7 +1874,7 @@ NOP
         JSR S1B13
         NOP                     ; Delay?
         JMP L18E4
-        ; return
+        ; Return
 
 .S1975
         LDY #$00
@@ -1884,7 +1894,7 @@ NOP
         STA AlienUnknown1Sprite,X
         LDA #$05
         STA AlienUnknown2Sprite,X
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L1997
         TYA
@@ -1911,7 +1921,7 @@ NOP
         LDA spriteXPos          ; ZP02
         LDX currentSprite       ; ZP04
         STA AlienUnknown2Sprite,X
-        RTS                     ; exit
+        RTS                     ; Exit
 
 .L19BE
         LDA AlienUnknown1Sprite,X
@@ -1940,7 +1950,7 @@ NOP
         STA ZP23
         LDA #$E8
 .L19E1
-        RTS                     ; exit
+        RTS                     ; Exit
 
 ;----------------------------------------------------------------------------
 
@@ -1949,7 +1959,7 @@ NOP
         TYA
         BEQ L19E1
         JMP L1641
-        ; return
+        ; Return
 
 .L19EA  ; Ship characters
         ;EQUB $24,$25,$26,$27,$28,$29,$2A,$2B,$2C,$2D
@@ -1968,14 +1978,17 @@ NOP
         LDY #$09                ; 9 parts possible parts to ship
 .L19F9
         CMP L19EA-1,Y
-        BEQ L1A04
+        BEQ LoseLife            ; L1A04
         DEY
         BNE L19F9
 
         JMP PlotSprite          ; L10EF
-        ; return
+        ; Return
 
-.L1A04  ; Ship destroyed
+;----------------------------------------------------------------------------
+; LoseLife ; L1A04
+;----------------------------------------------------------------------------
+.LoseLife 
         LDX #$F6
         TXS
         LDA #$00
@@ -2023,7 +2036,7 @@ NOP
 
 .L1A43  ; Game over
         JMP ResetGame           ; L1AE3
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; AddScore ; L1A46
@@ -2046,7 +2059,7 @@ NOP
         DEC ZP3C
         BNE L1A4A
         JMP CheckHighscore      ; L1B1F
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; DestroyAlien ; L1A65
@@ -2057,7 +2070,7 @@ NOP
         AND #$07
         STA ZP3C                ; 0 - 3
         JMP AddScore            ; L1A46
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; SaveHumanoid ; L1A71
@@ -2067,7 +2080,7 @@ NOP
         LDA #$14
         STA ZP3C                ; 20
         JMP AddScore            ; L1A46
-        ; return
+        ; Return
 
  ;----------------------------------------------------------------------------
 
@@ -2108,35 +2121,42 @@ NOP
         STA ZP33                ; Why?
 
         JSR L18E4               ; 
-        RTS                     ; exit, coukd have used a JMP instead
+        RTS                     ; Exit, coukd have used a JMP instead
 
 ;----------------------------------------------------------------------------
-
+;
+;----------------------------------------------------------------------------
 .L1AB0
         LDY #$00
 .L1AB2
         LDA ZP71,Y              ; Get Humanoid Action State
-        CMP #$FF
-        BNE L1AC2
-        INY
-        INY
-        CPY #$0C
-        BNE L1AB2
-        JMP L175D
+        CMP #$FF                ; Humanoid Destroyed?
+        BNE L1AC2               ; No so branch
+        INY                     ;
+        INY                     ; 
+        CPY #$0C                ; Check all humanoids
+        BNE L1AB2               ; loop back
 
-.L1AC2
+        JMP GameOver            ; All Humanoids destroyed
+        ; Return
+
+.L1AC2  ; Continue game
         JMP GameLoop            ; L1108
+        ; Return
 
+;----------------------------------------------------------------------------
+; 
+;----------------------------------------------------------------------------
 .L1AC5
         LDA MissileFrameRate    ; ZP13
-        CMP #$01
-        BEQ L1AB0
+        CMP #$01                ; Every odd frame
+        BEQ L1AB0               ; Yes so branch
         JMP GameLoop            ; L1108
-        ; return
+        ; Return
 
+;----------------------------------------------------------------------------
         NOP                     ; not used
         RTS                     ; not used
-
 ;----------------------------------------------------------------------------
 ; Start Game ; L1AD0
 ;----------------------------------------------------------------------------
@@ -2148,7 +2168,7 @@ NOP
         STA ZP37                ; ?
         STA livesLeft           ; Number of lives? ; ZP38
         JMP BeginLevel          ; L101F ; jump back to begining of code
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; TitleScreen ; L1ADD
@@ -2183,7 +2203,7 @@ NOP
         AND #KEYPRESS_FIRE      ; Test for the Beeb's Return Key
         BEQ L1AF6               ; fire not pressed so loop
         JMP StartGame           ; L1AD0 ; fire pressed
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
 ;
@@ -2192,8 +2212,7 @@ NOP
         JSR S161A
         JSR S1936
         JMP L1AC5
-        ; return
-
+        ; Return
 
 .L1B09  ;
         ;EQUB $A8,$83,$A9,$B1,$B9,$B8,$B2,$8A,$83,$8D
@@ -2204,15 +2223,15 @@ NOP
         BEQ L1B1A               ;
 .L1B17
         STA ZP33                ;
-        RTS                     ;
+        RTS                     ; Exit
 
 .L1B1A
         LDA #$0E
         JMP L1B17
-        ; return
+        ; Return
 
 ;----------------------------------------------------------------------------
-; CheckHighscore  ; L1B1F
+; CheckHighscore ; L1B1F
 ;----------------------------------------------------------------------------
 .CheckHighscore
         PLA                         ; Why? Not used
@@ -2222,17 +2241,17 @@ NOP
         LDA HIGHSCORE_ADDRESS,Y     ;
         CMP SCREEN_ADDRESS,Y        ;
         BMI L1B33                   ; New highscore
-        BNE L1B32                   ; exit
+        BNE L1B32                   ; Exit
         INY                         ; Next character
         CPY #$05                    ; last character compared?
         BNE L1B23                   ; No then loop back
 .L1B32
-        RTS
+        RTS                         ; Exit
 
 .L1B33  ; Call UpdateHighscore
         LDY #$05
-        JMP UpdateHighscore         ; L1CE0 (Inside Fonts1.asm)
-        ; return
+        JMP UpdateHighscore         ; L1CE0 (Inside Fonts.asm)
+        ; Return
 
 ;----------------------------------------------------------------------------
 ; Pattern Wave Data? ; L1B38
@@ -2283,6 +2302,7 @@ NOP
         EQUB $55,$55,$55,$54,$66,$66,$66,$00
 
 ; Following should load at $1C00
+ORG $1C00
 INCLUDE "Fonts.asm"
 
 ;----------------------------------------------------------------------------
