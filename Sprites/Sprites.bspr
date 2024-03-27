@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SpriteSheet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Mode="1">
+  <BackgroundColour>Transparent</BackgroundColour>
+  <DefaultPalette>
+    <Colour>Black</Colour>
+    <Colour>Red</Colour>
+    <Colour>Yellow</Colour>
+    <Colour>White</Colour>
+  </DefaultPalette>
+  <DefaultShowGridLines>true</DefaultShowGridLines>
+  <HorizontalBlockDividers>0</HorizontalBlockDividers>
+  <VerticalBlockDividers>0</VerticalBlockDividers>
+  <DefaultZoom>15</DefaultZoom>
+  <HasSetExportSettings>false</HasSetExportSettings>
+  <SpriteLayout>RowMajor</SpriteLayout>
+  <ShouldBreakSprites>false</ShouldBreakSprites>
+  <SubSpriteWidth>2</SubSpriteWidth>
+  <SubSpriteHeight>2</SubSpriteHeight>
+  <ShouldExportSeparateMask>false</ShouldExportSeparateMask>
+  <ShouldGenerateHeader>true</ShouldGenerateHeader>
+  <AssemblerSyntax>{n} = &amp;{v}</AssemblerSyntax>
+  <SelectedAssembler>BeebASM</SelectedAssembler>
+  <SpriteList>
+    <Sprite Name="Alien1A" Width="8" Height="8" Guid="a83166b2-acdf-4e31-a6f2-48a0bda69e78">
+      <Bitmap>AAADAwMDAAAAAAADAAAAAAMAAAMAAAADAwAAAwMDAwMDAwMDAwAAAwMAAAADAAADAAAAAAMAAAAAAAMDAwMAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien1B" Width="8" Height="8" Guid="0cc1e4a4-1d24-41d8-82a8-65d15acd0fc1">
+      <Bitmap>AAAAAwMAAAAAAwAAAAMDAAADAAADAAAAAwADAwMAAAMDAAADAwMAAwAAAAMAAAMAAAMDAAAAAwAAAAADAwAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien1C" Width="8" Height="8" Guid="06eca089-da3e-4c59-9d00-473514c65e64">
+      <Bitmap>AAADAAADAAAAAwAAAAADAAMAAwAAAwADAAAAAwMAAAAAAAADAwAAAAMAAwAAAwADAAMAAAAAAwAAAAMAAAMAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien1D" Width="8" Height="8" Guid="dd33e646-c409-4686-8f74-d00f53e33ee7">
+      <Bitmap>AAAAAwMAAAAAAwMAAAADAAAAAAMAAAMAAwAAAwMDAAMDAAMDAwAAAwADAAADAAAAAAMAAAADAwAAAAADAwAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien2A" Width="8" Height="8" Guid="28cd6ff0-cb0d-45e4-ab65-4fa2bbcd619b">
+      <Bitmap>AAAAAAAAAAAAAAMDAwMAAAAAAwAAAwAAAwADAAADAAMDAAMAAAMAAwAAAwAAAwAAAAADAwMDAAAAAAAAAAAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien2B" Width="8" Height="8" Guid="99e73eba-367f-4de7-bb01-8fa0736878b6">
+      <Bitmap>AAAAAwAAAAAAAAADAwMAAAMAAwMAAAMAAwADAAADAAAAAAMAAAMAAwADAAADAwADAAADAwMAAAAAAAAAAwAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien2C" Width="8" Height="8" Guid="c9e12a4d-c76a-42be-b934-a6cd4831dfd4">
+      <Bitmap>AAAAAAAAAAAAAwAAAwMAAAAAAAMAAwMAAAADAAAAAwAAAwAAAAMAAAADAwADAAAAAAADAwAAAwAAAAAAAAAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien3A" Width="8" Height="8" Guid="85e2ae76-dde5-429f-9c94-c94e61416de3">
+      <Bitmap>AwAAAAAAAAMAAwMDAwMDAAADAAAAAAMAAAMAAAAAAwAAAwAAAAADAAADAAAAAAMAAAMDAwMDAwADAAAAAAAAAw==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien3B" Width="8" Height="8" Guid="9f178ea5-2a95-4815-9ab3-751e06ed1dc2">
+      <Bitmap>AAAAAwAAAAAAAAMDAwMAAAADAAAAAAMAAAMAAAAAAwMDAwAAAAADAAADAAAAAAMAAAADAwMDAAAAAAAAAwAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien3C" Width="8" Height="8" Guid="256fec20-0bb6-4a38-8b29-4288251322ac">
+      <Bitmap>AAAAAwMAAAAAAAMDAwMAAAADAAAAAAMAAwMAAAAAAwMDAwAAAAADAwADAAAAAAMAAAADAwMDAAAAAAADAwAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien3D" Width="8" Height="8" Guid="8744608a-ae0c-48b4-b2dc-f8ae26a76a49">
+      <Bitmap>AAAAAAMAAAAAAAMDAwMAAAADAAAAAAMAAwMAAAAAAwAAAwAAAAADAwADAAAAAAMAAAADAwMDAAAAAAADAAAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien4A" Width="8" Height="8" Guid="57cb4067-3f5d-4b98-82b1-c46c2d37d30c">
+      <Bitmap>AwAAAAAAAAMAAwAAAAADAAAAAwAAAwAAAAAAAwMAAAAAAAADAwAAAAAAAwAAAwAAAAMAAAAAAwADAAAAAAAAAw==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien4B" Width="8" Height="8" Guid="1526b4cc-df50-4038-b5a0-a67499592a47">
+      <Bitmap>AwAAAAAAAAMAAwAAAAADAAAAAwMDAwAAAAADAwMDAAAAAAMDAwMAAAAAAwMDAwAAAAMAAAAAAwADAAAAAAAAAw==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien4C" Width="8" Height="8" Guid="b714715a-f3a2-4bef-8566-e13c9586c3fe">
+      <Bitmap>AwAAAAAAAAMAAwMDAwMDAAADAwMDAwMAAAMDAAADAwAAAwMAAAMDAAADAwMDAwMAAAMDAwMDAwADAAAAAAAAAw==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien5A" Width="8" Height="8" Guid="5a798b97-c6a4-4267-aa83-2f558a0057bd">
+      <Bitmap>AAAAAwMAAAAAAAMAAAMAAAAAAwAAAwAAAAMAAAAAAwAAAwAAAAADAAAAAwAAAwAAAAADAAADAAAAAAADAwAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien5B" Width="8" Height="8" Guid="4a842ba8-2c5c-4a06-9abe-7e3e7f941f05">
+      <Bitmap>AAAAAAAAAAAAAAADAwAAAAAAAwAAAwAAAAMAAAAAAwAAAwAAAAADAAAAAwAAAwAAAAAAAwMAAAAAAAAAAAAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Alien5C" Width="8" Height="8" Guid="f250eb15-f8ba-49ea-995e-e19b89f89522">
+      <Bitmap>AAAAAAAAAAAAAAADAwAAAAADAwAAAwMAAwAAAAAAAAMDAAAAAAAAAwADAwAAAwMAAAAAAwMAAAAAAAAAAAAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Humanoid" Width="8" Height="8" Guid="bba2bb71-3923-4191-bf8e-95a4934f5037">
+      <Bitmap>AAAAAwMAAAAAAwAAAAADAAABAAMDAAEAAAABAQEBAAAAAAABAQAAAAAAAgICAgAAAAACAAACAAAAAgIAAAICAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Face" Width="8" Height="8" Guid="d3a8cddd-a7a8-4915-ae8a-2784a0070844">
+      <Bitmap>AAAAAAAAAAAAAQEBAQEAAAEAAAEAAAEAAQAAAQAAAQABAQEAAQEBAAABAQEBAQAAAAEAAAABAAAAAAEBAQAAAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="SmallShip" Width="8" Height="8" Guid="51615b6d-9c3c-48a0-9eaf-60c6b7ed1380">
+      <Bitmap>AAAAAwMAAAAAAAADAwAAAAAAAAMDAAAAAAMAAwMAAwAAAwADAwADAAADAwMDAwMAAwMDAwMDAwMDAwMDAwMDAw==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="LargeShip" Width="24" Height="16" Guid="332e8205-7de4-42bb-a385-5524b39dc2b3">
+      <Bitmap>AAAAAAAAAAAAAAADAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwAAAAAAAAAAAAAAAAAAAAAAAAAAAwADAwADAAAAAAAAAAAAAAAAAAAAAAAAAwADAwADAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAAAAAAAAAAAAAAAAAAAAAAADAwMDAwMDAwAAAAAAAAAAAAAAAAAAAAADAwMDAwMDAwAAAAAAAAAAAAMAAAAAAAADAwMDAwMDAwAAAAAAAAMAAAMAAAAAAAMDAwMDAwMDAwMAAAAAAAMAAAMDAAAAAAMDAwMAAAMDAwMAAAAAAwMAAAMDAwAAAwMDAwADAwADAwMDAAADAwMAAAMDAwMDAwMDAwADAwADAwMDAwMDAwMAAAMDAwMDAwMDAwMAAAMDAwMDAwMDAwMAAAMDAwMDAwMDAwADAwADAwMDAwMDAwMAAAMDAAAAAAMDAwAAAAADAwMAAAAAAwMA</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="Bullet" Width="2" Height="2" Guid="12b82083-e23f-4c14-b284-92d64909aae4">
+      <Bitmap>AwADAA==</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Red</Colour>
+        <Colour>Yellow</Colour>
+        <Colour>White</Colour>
+      </Palette>
+    </Sprite>
+  </SpriteList>
+  <AnimationSets />
+</SpriteSheet>
