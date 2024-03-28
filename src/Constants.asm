@@ -62,6 +62,15 @@ DOTTED_LINE_ADDRESS = SCREEN_ADDRESS + $348
 PLAYER_XPOS         = $0A
 PLAYER_YPOS         = $14
 
+BLACK               = $00
+WHITE               = $01
+RED                 = $02
+CYAN                = $03
+MAGENTA             = $04
+GREEN               = $05
+BLUE                = $06
+Yellow              = $07
+
 ; Characters used for Beebs Mode7
 BLANK               = $20 ; 
 HUMANOID            = $21 ; !
