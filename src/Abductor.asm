@@ -11,8 +11,9 @@
 ; to pad the assembler so it still matches the VIC20
 ; BeebASM cannot do $00??,X as it converts to $??,X as it's more efficient
 ; We need to pad with NOP again, until fully dissembled.
-; For the time being all VIC20 colour mapping is shunted off to
+; For the time being all VIC20 sound mapping is shunted off to
 ; the Beebs memory location $0900 - $09FF, eventually it will be discarded.
+; VIC20 Colour mapping is ignored
 
 NATIVE_ADDR		= &101A		; address at which code will run
 RELOAD_ADDR		= &1100		; address at which code will load
@@ -22,12 +23,12 @@ OFFSET			= RELOAD_ADDR - NATIVE_ADDR
 INCLUDE "Constants.asm"
 
 ORG &0
-.ZP00               SKIP 1
-.ZP01               SKIP 1
+.screenAddr         SKIP 2 ; ZP01 + ZP02
+
 .spriteXPos         SKIP 1 ; ZP02
 .spriteYPos         SKIP 1 ; ZP03
 .currentSprite      SKIP 1 ; ZP04
-.ZP05               SKIP 1
+.spriteColour       SKIP 1 ; ZP05
 .playerInput        SKIP 1 ; ZP06
 .currentPlayerXPos  SKIP 1 ; ZP07
 .shipSize           SKIP 1 ; ZP08
@@ -45,8 +46,8 @@ ORG &0
 .ZP14               SKIP 2 ; DUMMY
 
 .currentPlayerYPos  SKIP 1 ; ZP16
-.ZP17               SKIP 1
-.ZP18               SKIP 1
+.alienSprite        SKIP 1 ; ZP17
+.alienColour        SKIP 1 ; ZP18
 .ZP19               SKIP 1
 .ZP1A               SKIP 1
 
@@ -56,8 +57,8 @@ ORG &0
 
 .ZP1D               SKIP 3 ; DUMMY
 
-.ZP20               SKIP 1 ; Pattern data storage
-.ZP21               SKIP 1 ; Pattern data storage
+.waveAddr           SKIP 2 ; ZP20 + ZP21
+
 .ZP22               SKIP 1
 .ZP23               SKIP 1
 
@@ -87,7 +88,7 @@ ORG &0
 
 .ZP35               SKIP 2 ; DUMMY
 
-.ZP37               SKIP 1
+.shipColour         SKIP 1 ; ZP37
 .livesLeft          SKIP 1 ; ZP38
 
 .ZP39               SKIP 3 ; DUMMY
@@ -212,106 +213,106 @@ ORG NATIVE_ADDR
         STA CLEARSCREEN_ADDRESS,Y   ; STA $1E16,Y
         STA $7D00,Y                 ; STA $1F00,Y
         LDA #BLANK                  ; Why? Not required
-        STA $7E00,Y                 ;
-        STA $7F00,Y                 ; 
+        STA $7E00,Y                 ; Altered code for Beeb
+        STA $7F00,Y                 ; Altered code for Beeb
         DEY                         ;
         BNE L1069                   ; loop back
 
         LDY #$16
-        LDA #DOTTED_LINE            ; - symbol
+        LDA #DOTTED_LINE            ; ASCII '-'' 
 .L1080  ; dotted line
         STA DOTTED_LINE_ADDRESS,Y   ; STA $1FCD,Y
         DEY
         BNE L1080                   ; loop back
-        RTS                         ; Return
+        RTS                         ; Exit
 
 ;----------------------------------------------------------------------------
 ; InitialiseGame ; L1087
 ;----------------------------------------------------------------------------
 .InitialiseGame
         ; not required for the Beeb
-        LDA #$0F        ; %0000 1111
-        STA $0904       ; VIC.VICCRE  ; Aux colour for multimode Lt Yellow
+        LDA #$0F                    ; %0000 1111
+        STA $0904                   ; VIC.VICCRE  ; Aux colour for multimode Lt Yellow
 
         ; VIC Screen is 1C00, but for the Beeb we will use Mode 7 7C00
         LDA #LO(SCREEN_ADDRESS)
-        STA ZP00
+        STA screenAddr              ; ZP00
         LDA #HI(SCREEN_ADDRESS)
-        STA ZP01
+        STA screenAddr+1            ; ZP01
 
         LDY #$17
         LDX #$00
-.L1098  ; Create lookup addresses?
+.L1098  ; Create row lookup addresses?
 
-        LDA ZP01
-        STA ZP58,X : NOP        ; Handles $00??,X
+        LDA screenAddr+1            ; ZP01
+        STA ZP58,X : NOP            ; Handles $00??,X
 
-        LDA ZP00
-        STA ZP40,X : NOP        ; Handles $00??,X
+        LDA screenAddr
+        STA ZP40,X : NOP            ; Handles $00??,X
 
-        CLC
-        ADC #SCREEN_WIDTH       ; screen width of Mode 7 = 40
-        STA ZP00                ; Low Byte $00,$28,$50,$78 etc into 0040 onwards
-        LDA ZP01
-        ADC #$00
-        STA ZP01                ; High Byte $7C,$7D,$7E,$7F etc into 0058 onwards
+        CLC                         ; Clear carry
+        ADC #SCREEN_WIDTH           ; screen width of Mode 7 = 40
+        STA screenAddr              ; Low Byte $00,$28,$50,$78 etc into 0040 onwards
+        LDA screenAddr+1            ; ZP01
+        ADC #$00                    ; Add 0 with carry into high byte
+        STA screenAddr+1            ; ZP01 High Byte $7C,$7D,$7E,$7F etc into 0058 onwards
         INX
         DEY
-        BNE L1098       ; loop back
+        BNE L1098                   ; loop back
 
         LDA #$02
-        STA shipSize    ; ZP08
-        STA shipFrame   ; Starts with half frame ZP09
+        STA shipSize                ; ZP08 Set to Double ship
+        STA shipFrame               ; Starts with half frame ZP09
 
         ; Set player x and y start position to 11,20
         ; dotted line is on row 21
         ; Humanoids are on row 22
         ; VIC screen is 22x23
-        LDA #PLAYER_XPOS        ; 11
-        STA currentPlayerXPos   ; ZP07
+        LDA #PLAYER_XPOS            ; 11
+        STA currentPlayerXPos       ; ZP07
 
-        LDA #PLAYER_YPOS        ; 20
-        STA currentPlayerYPos   ; ZP16
+        LDA #PLAYER_YPOS            ; 20
+        STA currentPlayerYPos       ; ZP16
 
         LDA #$00
-        STA MissileFired        ; ZP10 Reset missile firing
-        STA Missile1            ; ZP11 Reset missile firing ship size 1 + 2  1 bullet
-        STA Missile2            ; ZP12 Reset missile firing ship size 2 only 2 bullets
+        STA MissileFired            ; ZP10 Reset missile fired
+        STA Missile1                ; ZP11 Reset missile firing ship size 1 + 2  1 bullet
+        STA Missile2                ; ZP12 Reset missile firing ship size 2 only 2 bullets
 
-        JSR InitialiseHumanoids ; S144A
+        JSR InitialiseHumanoids     ; S144A
 
-        LDA #$00                ; Set Humanoid Action State to 0 (SAFE)
-        STA ZP71                ; Already set with InitialiseHumanoids
+        LDA #$00                    ; Set Humanoid Action State to 0 (SAFE)
+        STA ZP71                    ; Already set with InitialiseHumanoids
 
-        LDA #$05
-        STA ZP1A                ;
+        LDA #$05                    ;
+        STA ZP1A                    ;
 
-        LDA #$03
-        STA ZP1C                ; ?
+        LDA #$03                    ;
+        STA ZP1C                    ; ?
 
-        JSR S1A80
+        JSR S1A80                   ;
 
-        NOP:NOP:NOP:NOP         ; Why?
+        NOP:NOP:NOP:NOP             ; Delay?
 
-        JMP GameLoop            ; L1108
+        JMP GameLoop                ; L1108
         ; Return
 
 ;----------------------------------------------------------------------------
 ; CalcAddress ; S10E0
 ;----------------------------------------------------------------------------
 .CalcAddress
-        LDX spriteYPos  ; ZP03
-        LDY spriteXPos  ; ZP02 - not used in this function
+        LDX spriteYPos              ; ZP03
+        LDY spriteXPos              ; ZP02 - not used in this function
 
         ;LDA $0040,X
-        NOP             ; BeebEm cannot do $00??,X
+        NOP                         ; BeebEm cannot do $00??,X
         LDA ZP40,X
-        STA ZP00
+        STA screenAddr
 
         ;LDA $0058,X
-        NOP             ; BeebEm cannot do $00??,X
+        NOP                         ; BeebEm cannot do $00??,X
         LDA ZP58,X
-        STA ZP01
+        STA screenAddr+1            ; ZP01
         RTS
 
 ;----------------------------------------------------------------------------
@@ -320,43 +321,41 @@ ORG NATIVE_ADDR
 ; On entry currentSprite already defined
 ;----------------------------------------------------------------------------
 .PlotSprite
-        JSR CalcAddress         ; S10E0
-        LDA currentSprite       ; ZP04
-        STA (ZP00),Y            ; Plot to screen address
-        LDA ZP01                ;
-        CLC                     ;
-        ADC #$78                ; why #$78
-        STA ZP01                ;
-        LDA ZP05                ; 
-        STA (ZP00),Y            ; Plot to screen address
-        RTS                     ; Exit
+        JSR CalcAddress             ; S10E0
+        LDA currentSprite           ; ZP04
+        STA (screenAddr),Y          ; Plot to screen address
+        LDA screenAddr+1            ; ZP01
+        CLC                         ;
+        ADC #$78                    ; Add to 1C makes 9600 colour address
+        STA screenAddr+1            ; ZP01    
+        LDA spriteColour            ; ZP05             
+        ;STA (screenAddr),Y         ; Plot to screen address
+        NOP:NOP:NOP                 ; Beeb doesn't use colour map
+        RTS                         ; Exit
 ;----------------------------------------------------------------------------
 ; GetCharacter ; S1102
 ;----------------------------------------------------------------------------
 .GetCharacter
-        JSR CalcAddress         ; S10E0
-        LDA (ZP00),Y
+        JSR CalcAddress             ; S10E0
+        LDA (screenAddr),Y
         RTS
 
 ;----------------------------------------------------------------------------
 ; Game loop ; L1108
 ;----------------------------------------------------------------------------
 .GameLoop
-        JSR ProcessShip         ; S11DF
-        JSR ProcessMissile      ; S126F
-        JSR UpdateMissile       ; S1306
-        JSR UpdateMissile2      ; S1363
-        JSR ProcessSound1       ; S1421
-        JSR ProcessHumanoid     ; S1489 
-        JSR UpdateHumanoid      ; S159B
-        JSR ProcessSound2       ; S1603
+        JSR ProcessShip             ; S11DF
+        JSR ProcessMissile          ; S126F
+        JSR UpdateMissile           ; S1306
+        JSR UpdateMissile2          ; S1363
+        JSR ProcessSound1           ; S1421
+        JSR ProcessHumanoid         ; S1489 
+        JSR UpdateHumanoid          ; S159B
+        JSR ProcessSound2           ; S1603
         JMP L1B00
 ;----------------------------------------------------------------------------
-        ; This is not used
-        ;EQUB $D0,$E3,$60
-        BNE GameLoop ; $D0, $E3
-        RTS          ; $60
-
+        BNE GameLoop                ; This is not used 
+        RTS                         ; This is not used
 ;----------------------------------------------------------------------------
 ; ProcessKeyboard
 ;----------------------------------------------------------------------------
@@ -412,36 +411,36 @@ NOP
 ;-------------------------------------------------------------------------
 .KeyboardScanCheck
 {
-	STA sysVIAPortA     ; select key
-	LDA sysVIAPortA	    ; read key status
-	ASL A			    ; shift key status into player input bits
-	ROL playerInput     ; ZP06
-	RTS				    ; done.
+	STA sysVIAPortA                 ; select key
+	LDA sysVIAPortA	                ; read key status
+	ASL A			                ; shift key status into player input bits
+	ROL playerInput                 ; ZP06
+	RTS				                ; Exit
 }
 
 ;----------------------------------------------------------------------------
 ; UpdatePlayerShip ; S115E
 ;----------------------------------------------------------------------------
 .UpdatePlayerShip
-        JSR S11E7               ; Process Keyboard with A containing keypress
-        AND #$04                ; Right pressed
-        BEQ L117C               ; Yes then branch
-        DEC shipFrame           ; ZP09
-        BNE L1170               ; Exit
-        LDA #$02                ; set single ship to 2 chars
-        STA shipFrame           ; ZP09
-        JMP L1171               ; Ship going left
+        JSR S11E7                   ; Process Keyboard with A containing keypress
+        AND #$04                    ; Right pressed
+        BEQ L117C                   ; Yes then branch
+        DEC shipFrame               ; ZP09
+        BNE L1170                   ; Exit
+        LDA #$02                    ; set single ship to 2 chars
+        STA shipFrame               ; ZP09
+        JMP L1171                   ; Ship going left
         ; Return
 
 .L1170
         RTS
 
 .L1171  ; Ship going left
-        DEC currentPlayerXPos   ; ZP07
-        LDA currentPlayerXPos   ; ZP07
-        CMP #$00                ; player min width 0
-        BNE L1198               ; No
-        JMP L118E               ; Use right code to move it right by 1
+        DEC currentPlayerXPos       ; ZP07
+        LDA currentPlayerXPos       ; ZP07
+        CMP #$00                    ; player min width 0
+        BNE L1198                   ; No
+        JMP L118E                   ; Use right code to move it right by 1
         ; Return
 
 .L117C
@@ -449,12 +448,12 @@ NOP
         ; Return
 
 .L117F
-        NOP:NOP:NOP             ; delay?
+        NOP:NOP:NOP                 ; Delay?
 
         CMP #$03
-        BNE L118D               ; Exit
+        BNE L118D                   ; Exit
         LDA #$01
-        STA shipFrame           ; ZP09
+        STA shipFrame               ; ZP09
         JMP L118E
         ; Return
 
@@ -462,11 +461,11 @@ NOP
         RTS
 
 .L118E  ; Ship moving right
-        INC currentPlayerXPos   ; ZP07
-        LDA currentPlayerXPos   ; ZP07
-        CMP #$14                ; 20 screen width
-        BNE L1198               ; No
-        DEC currentPlayerXPos   ; ZP07 set back to 19
+        INC currentPlayerXPos       ; ZP07
+        LDA currentPlayerXPos       ; ZP07
+        CMP #$14                    ; 20 screen width
+        BNE L1198                   ; No
+        DEC currentPlayerXPos       ; ZP07 set back to 19
 
 .L1198
         JMP L11FD
@@ -476,344 +475,344 @@ NOP
 ; ProcessShip1  ; L119B
 ;----------------------------------------------------------------------------
 .ProcessShip1
-        LDA shipSize            ; ZP08
-        CMP #$02                ; Double Size
-        BEQ DoubleShip3Chars    ; Yes then branch
+        LDA shipSize                ; ZP08
+        CMP #$02                    ; Double Size
+        BEQ DoubleShip3Chars        ; Yes then branch
 
-.ShipSingleSize                 ; Ship Size 1
-        LDA currentPlayerXPos   ; ZP07
-        STA spriteXPos          ; ZP02
-        LDA currentPlayerYPos   ; ZP16
-        STA spriteYPos          ; ZP03
+.ShipSingleSize                     ; Ship Size 1
+        LDA currentPlayerXPos       ; ZP07
+        STA spriteXPos              ; ZP02
+        LDA currentPlayerYPos       ; ZP16
+        STA spriteYPos              ; ZP03
 
-        JSR CalcAddress         ; S10E0
+        JSR CalcAddress             ; S10E0
 
-        LDA #BLANK              ; SPACE
-        STA (ZP00),Y            ; Plot to screen address
-        INY                     ; Next character space
-        STA (ZP00),Y            ; Plot to screen address
+        LDA #BLANK                  ; SPACE
+        STA (screenAddr),Y          ; Plot to screen address
+        INY                         ; Next character space
+        STA (screenAddr),Y          ; Plot to screen address
 
-        JSR UpdatePlayerShip    ; S115E
+        JSR UpdatePlayerShip        ; S115E
 
-        LDA shipFrame           ; ZP09
-        CMP #$02                ; Ship made of 2 halves?
-        BEQ L11ED               ; Half ship, and then jumps to SingleShip2Chars ; L11CB
+        LDA shipFrame               ; ZP09
+        CMP #$02                    ; Ship made of 2 halves?
+        BEQ L11ED                   ; Half ship, and then jumps to SingleShip2Chars ; L11CB
 
         ; Single ship (full)
-        LDA #SINGLE_SHIP        ; + sign maybe single ship
-        STA currentSprite       ; ZP04
-        LDA ZP37                ;
-        STA ZP05                ;
-        LDA currentPlayerXPos   ; ZP07
-        STA spriteXPos          ; ZP02
-        JMP PlotSprite          ; L10EF
+        LDA #SINGLE_SHIP            ; + sign maybe single ship
+        STA currentSprite           ; ZP04
+        LDA shipColour              ; ZP37                   
+        STA spriteColour            ; ZP05                
+        LDA currentPlayerXPos       ; ZP07
+        STA spriteXPos              ; ZP02
+        JMP PlotSprite              ; L10EF
         ; Return
 
 ;----------------------------------------------------------------------------
 ; SingleShip2Chars ; L11CB
 ;----------------------------------------------------------------------------
 .SingleShip2Chars 
-        LDA #SINGLE_SHIPH1      ; '<' left half ship 
-        STA currentSprite       ; ZP04
-        LDA ZP37                ;
-        STA ZP05                ;
-        JSR PlotSprite          ; L10EF
-        INC spriteXPos          ; ZP02
-        LDA #SINGLE_SHIPH2      ; '>' right half ship 
-        STA currentSprite       ; ZP04
-        JMP PlotSprite          ; L10EF
+        LDA #SINGLE_SHIPH1          ; '<' left half ship 
+        STA currentSprite           ; ZP04
+        LDA shipColour              ; ZP37                    
+        STA spriteColour            ; ZP05               
+        JSR PlotSprite              ; L10EF
+        INC spriteXPos              ; ZP02
+        LDA #SINGLE_SHIPH2          ; '>' right half ship 
+        STA currentSprite           ; ZP04
+        JMP PlotSprite              ; L10EF
         ; Return
 
 ;----------------------------------------------------------------------------
 ; ProcessShip ; S11DF
 ;----------------------------------------------------------------------------
 .ProcessShip
-        DEC ZP0A                ; some sort of counter
+        DEC ZP0A                    ; some sort of counter
         BEQ S11E4
         RTS
 
 .S11E4
-        JMP ProcessShip1        ; L119B
+        JMP ProcessShip1            ; L119B
         ; Return
 
 ;----------------------------------------------------------------------------
-;
+; Why? Just call ProcessKeyboard, once dissasembled
 ;----------------------------------------------------------------------------
-.S11E7  ; Just call ProcessKeyboard, once dissasembled
-        JSR ProcessKeyboard ; S1126
-        LDA playerInput     ; Not required as ProcessKeyboard return into playerInput
+.S11E7  
+        JSR ProcessKeyboard         ; S1126
+        LDA playerInput             ; Not required as ProcessKeyboard return into playerInput
         RTS
 ;----------------------------------------------------------------------------
 
 .L11ED
-        LDA currentPlayerXPos   ; ZP07
-        STA spriteXPos          ; ZP02
-        JMP SingleShip2Chars         ; L11CB return back to plotting ship
+        LDA currentPlayerXPos       ; ZP07
+        STA spriteXPos              ; ZP02
+        JMP SingleShip2Chars        ; L11CB return back to plotting ship
         ; Return
 ;----------------------------------------------------------------------------
 
 .L11F4
         LDA playerInput
-        AND #KEYPRESS_RIGHT     ; #$08
+        AND #KEYPRESS_RIGHT         ; #$08
         BEQ L1198
         JMP L1202
 
 .L11FD
-        LDA currentPlayerXPos   ; ZP07
-        STA spriteXPos          ; ZP02
+        LDA currentPlayerXPos       ; ZP07
+        STA spriteXPos              ; ZP02
         RTS
 
 .L1202
-        INC shipFrame           ; ZP09
-        LDA shipFrame           ; ZP09
+        INC shipFrame               ; ZP09
+        LDA shipFrame               ; ZP09
         JMP L117F
         ; Return
 
-        RTS
-        NOP                     ; not used
-        NOP
-        NOP
+        RTS                         ; not used
+        NOP                         ; not used
+        NOP                         ; not used
+        NOP                         ; not used
 
 ;----------------------------------------------------------------------------
 ; DoubleShip3Chars ; L120D
 ;----------------------------------------------------------------------------
-.DoubleShip3Chars               ; Ship Size 2
-        LDA currentPlayerYPos   ; ZP16
-        STA spriteYPos          ; ZP03
-        LDA currentPlayerXPos   ; ZP07
-        STA spriteXPos          ; ZP02
-        DEC spriteXPos          ; ZP02
-        JSR CalcAddress         ; S10E0
+.DoubleShip3Chars                   ; Ship Size 2
+        LDA currentPlayerYPos       ; ZP16
+        STA spriteYPos              ; ZP03
+        LDA currentPlayerXPos       ; ZP07
+        STA spriteXPos              ; ZP02
+        DEC spriteXPos              ; ZP02
+        JSR CalcAddress             ; S10E0
 
         ; Blank 4 spaces
-        LDA #BLANK              ; SPACE
+        LDA #BLANK                  ; SPACE
         LDX #$04
 .L121E
-        STA (ZP00),Y            ; Plot to screen address
-        INY                     ; next column
-        DEX                     ;
-        BNE L121E               ; loop
+        STA (screenAddr),Y          ; Plot to screen address
+        INY                         ; next column
+        DEX                         ;
+        BNE L121E                   ; loop
 
         ; Draw the single ship on top
-        DEC currentPlayerYPos   ; ZP16
-        JSR ShipSingleSize      ; S11A1
+        DEC currentPlayerYPos       ; ZP16
+        JSR ShipSingleSize          ; S11A1
 
-        INC currentPlayerYPos   ; ZP16
-        LDA currentPlayerYPos   ; ZP16
-        STA spriteYPos          ; ZP03
-        LDA currentPlayerXPos   ; ZP07
-        STA spriteXPos          ; ZP02
-        DEC spriteXPos          ; ZP02
+        INC currentPlayerYPos       ; ZP16
+        LDA currentPlayerYPos       ; ZP16
+        STA spriteYPos              ; ZP03
+        LDA currentPlayerXPos       ; ZP07
+        STA spriteXPos              ; ZP02
+        DEC spriteXPos              ; ZP02
 
-        LDA shipFrame           ; ZP09
-        CMP #$02                ; Half a frame
-        BEQ DoubleShip4Chars ; L1255               ; Yes then branch
+        LDA shipFrame               ; ZP09
+        CMP #$02                    ; Half a frame
+        BEQ DoubleShip4Chars        ; Yes then branch
 
-        LDA #DOUBLE_SHIP1       ; 'A' sprite
+        LDA #DOUBLE_SHIP1           ; 'A' sprite
         STA ZP0B
 .L123F
         LDA ZP0B
-        STA currentSprite       ; ZP04
-        LDA ZP37
-        STA ZP05
-        JSR PlotSprite          ; L10EF
+        STA currentSprite           ; ZP04
+        LDA shipColour              ; ZP37
+        STA spriteColour            ; ZP05
+        JSR PlotSprite              ; L10EF
         INC ZP0B
-        INC spriteXPos          ; ZP02
+        INC spriteXPos              ; ZP02
         LDA ZP0B
-        CMP #DOUBLE_SHIP3+1     ; 'D' sprite
-        BNE L123F               ; loop
+        CMP #DOUBLE_SHIP3+1         ; 'D' sprite
+        BNE L123F                   ; loop
         RTS
 
 ;----------------------------------------------------------------------------
 ; DoubleShip4Chars ; L1255
 ;----------------------------------------------------------------------------
 .DoubleShip4Chars
-        LDA #DOUBLE_SHIPH1      ; * sprite
+        LDA #DOUBLE_SHIPH1          ; * sprite
         STA ZP0B
 .L1259
         LDA ZP0B
-        STA currentSprite       ; ZP04
-        LDA ZP37
-        STA ZP05
-        JSR PlotSprite          ; L10EF
+        STA currentSprite           ; ZP04
+        LDA shipColour              ; ZP37
+        STA spriteColour            ; ZP05
+        JSR PlotSprite              ; L10EF
         INC ZP0B
-        INC spriteXPos          ; ZP02
+        INC spriteXPos              ; ZP02
         LDA ZP0B
-        CMP #DOUBLE_SHIPH4+1    ;
-        BNE L1259               ; loop
+        CMP #DOUBLE_SHIPH4+1        ;
+        BNE L1259                   ; loop
         RTS
 
 ;----------------------------------------------------------------------------
 ; ProcessMissile ; S126F
 ;----------------------------------------------------------------------------
 .ProcessMissile
-        LDA ZP0A                ; counter ?
-        AND #$01                ; Every other frame?
-        BEQ L1276               ; Yes
-        RTS                     ; Exit ProcessMissile
+        LDA ZP0A                    ; counter ?
+        AND #$01                    ; Every other frame?
+        BEQ L1276                   ; Yes
+        RTS                         ; Exit ProcessMissile
 
 .L1276
-        DEC MissileFrameRate    ; ZP13
-        BEQ L127B               ; Fire Missile
-        RTS                     ; Exit ProcessMissile
+        DEC MissileFrameRate        ; ZP13
+        BEQ L127B                   ; Fire Missile
+        RTS                         ; Exit ProcessMissile
 
 .L127B  ; Fire Missile
-        LDA #$30                ; Reset Framerate
-        STA MissileFrameRate    ; ZP13
-        JSR ProcessKeyboard     ; S1126
-        LDA playerInput         ; ZP06
-        AND #KEYPRESS_FIRE      ; #$80 VIC #$10 BBC
-        BNE L128D               ; Fire pressed
+        LDA #$30                    ; Reset Framerate
+        STA MissileFrameRate        ; ZP13
+        JSR ProcessKeyboard         ; S1126
+        LDA playerInput             ; ZP06
+        AND #KEYPRESS_FIRE          ; #$80 VIC #$10 BBC
+        BNE L128D                   ; Fire pressed
 
-        LDA #$00                ;
-        STA MissileFired        ; Reset missile firing
-        RTS                     ; Exit ProcessMissile
+        LDA #$00                    ;
+        STA MissileFired            ; Reset missile firing
+        RTS                         ; Exit ProcessMissile
 
 .L128D  ; Fire pressed
-        LDA MissileFired        ; Missile fired
-        BEQ L1292               ; Yes if $00
-        RTS                     ; Exit ProcessMissile
+        LDA MissileFired            ; Missile fired
+        BEQ L1292                   ; Yes if $00
+        RTS                         ; Exit ProcessMissile
 
 .L1292  ; Fire missile
-        LDA Missile1            ; ZP11
-        BEQ L12A2               ; branch if missile = 0
+        LDA Missile1                ; ZP11
+        BEQ L12A2                   ; branch if missile = 0
 
-        LDA shipSize            ; ZP08
-        CMP #$02                ; size 2?
-        BEQ L129D               ; Branch if size 2
-        RTS                     ; Exit ProcessMissile
+        LDA shipSize                ; ZP08
+        CMP #$02                    ; size 2?
+        BEQ L129D                   ; Branch if size 2
+        RTS                         ; Exit ProcessMissile
 
 .L129D
-        LDA Missile2            ; ZP12
-        BEQ L12D1               ; branch if missile = 0
-        RTS                     ; Exit ProcessMissile
+        LDA Missile2                ; ZP12
+        BEQ L12D1                   ; branch if missile = 0
+        RTS                         ; Exit ProcessMissile
 
 .L12A2
-        LDA #$FF                ; No more firing
-        STA MissileFired        ; Set missile fire to $FF
-        JSR MissileSoundFX      ; S1416
+        LDA #$FF                    ; No more firing
+        STA MissileFired            ; Set missile fire to $FF
+        JSR MissileSoundFX          ; S1416
 
         NOP:NOP
 
-        LDA currentPlayerXPos   ; ZP07
-        STA ZP80                ;
-        LDA currentPlayerYPos   ; ZP16
-        STA ZP81                ;
-        DEC ZP81                ;
-        LDA shipFrame           ; ZP09
+        LDA currentPlayerXPos       ; ZP07
+        STA ZP80                    ;
+        LDA currentPlayerYPos       ; ZP16
+        STA ZP81                    ;
+        DEC ZP81                    ;
+        LDA shipFrame               ; ZP09
         CMP #$02
         BEQ L12C8
 
-        LDA #MISSILE            ; Missile sprite = "
-        STA missileSprite       ; ZP82
-        LDA #$36                ;
+        LDA #MISSILE                ; Missile sprite = "
+        STA missileSprite           ; ZP82
+        LDA #$36                    ;
 .L12C1
-        STA ZP83                ;
+        STA ZP83                    ;
 
-        LDA #$01                ; Missile 1
-        STA Missile1            ; Set missile fire to $01
-        RTS                     ; Exit ProcessMissile
+        LDA #$01                    ; Missile 1
+        STA Missile1                ; Set missile fire to $01
+        RTS                         ; Exit ProcessMissile
 
 .L12C8
-        LDA #MISSILE            ; Missile sprite = "
-        STA missileSprite       ; ZP82
-        LDA #$39                ; ?
+        LDA #MISSILE                ; Missile sprite = "
+        STA missileSprite           ; ZP82
+        LDA #$39                    ; ?
         JMP L12C1
 
 .L12D1
-        LDA #$FF                ; Stop firing
-        STA MissileFired        ; Set missile fire to $FF
-        JSR MissileSoundFX      ; S1416
+        LDA #$FF                    ; Stop firing
+        STA MissileFired            ; Set missile fire to $FF
+        JSR MissileSoundFX          ; S1416
 
         NOP:NOP
 
-        LDA currentPlayerXPos   ; ZP07
-        STA missileXPos         ; ZP84
-        DEC missileXPos         ; ZP84
+        LDA currentPlayerXPos       ; ZP07
+        STA missileXPos             ; ZP84
+        DEC missileXPos             ; ZP84
         STA ZP85
         INC ZP85
-        LDA currentPlayerYPos   ; ZP16
-        STA missileYPos         ; ZP86
-        DEC missileYPos         ; ZP86
+        LDA currentPlayerYPos       ; ZP16
+        STA missileYPos             ; ZP86
+        DEC missileYPos             ; ZP86
 
         ; Frames requires for proper sprites
-        LDA shipFrame           ; ZP09
+        LDA shipFrame               ; ZP09
         CMP #$02
         BEQ L12FD
-        LDA #MISSILE            ; Missile sprite = "
+        LDA #MISSILE                ; Missile sprite = "
         STA ZP88
-        LDA #MISSILE            ; Missile sprite = "
+        LDA #MISSILE                ; Missile sprite = "
 .L12F6
         STA ZP89
         LDA #$01
-        STA Missile2            ; ZP12
+        STA Missile2                ; ZP12
         RTS
 
 .L12FD
-        LDA #MISSILE            ; Missile sprite = "
+        LDA #MISSILE                ; Missile sprite = "
         STA ZP88
-        LDA #MISSILE            ; Missile sprite = "
+        LDA #MISSILE                ; Missile sprite = "
         JMP L12F6
 
 ;----------------------------------------------------------------------------
 ; UpdateMissile ; S1306
 ;----------------------------------------------------------------------------
 .UpdateMissile
-        LDA MissileFrameRate    ; ZP13
+        LDA MissileFrameRate        ; ZP13
         CMP #$01
         BEQ L135C
 .L130C
-        RTS                     ; Exit UpdateMissile
+        RTS                         ; Exit UpdateMissile
 
 .L130D
         LDA ZP80
-        STA spriteXPos          ; ZP02
+        STA spriteXPos              ; ZP02
         LDA ZP81
-        STA spriteYPos          ; ZP03
-        JSR GetCharacter        ; S1102
-        CMP missileSprite       ; ZP82
+        STA spriteYPos              ; ZP03
+        JSR GetCharacter            ; S1102
+        CMP missileSprite           ; ZP82
         BEQ L1323
         CMP ZP83
         BEQ L132E
         JSR S17F4
 .L1323
         LDA ZP83
-        STA currentSprite       ; ZP04
-        LDA #$07
-        STA ZP05
-        JMP PlotSprite          ; L10EF
+        STA currentSprite           ; ZP04
+        LDA #$07                    ; Colour Yellow
+        STA spriteColour            ; ZP05
+        JMP PlotSprite              ; L10EF
         ; Return
 
 .L132E
-        LDA #BLANK              ; SPACE
-        STA (ZP00),Y            ; Plot to screen address
+        LDA #BLANK                  ; SPACE
+        STA (screenAddr),Y          ; Plot to screen address
         DEC ZP81
         LDA ZP81
         CMP #$00
         BNE L133F
         LDA #$00
-        STA Missile1            ; ZP11 Reset missile fireing??
-        RTS                     ; Exit UpdateMissile
+        STA Missile1                ; ZP11 Reset missile fireing??
+        RTS                         ; Exit UpdateMissile
 
 .L133F
         LDA ZP81
-        STA spriteYPos          ; ZP03
-        JSR GetCharacter        ; S1102
-        CMP #BLANK              ; SPACE
-        BEQ L1351               ; Yes
-        CMP #$00                ; ?
-        BEQ L1351               ; Yes
+        STA spriteYPos              ; ZP03
+        JSR GetCharacter            ; S1102
+        CMP #BLANK                  ; SPACE
+        BEQ L1351                   ; Yes
+        CMP #$00                    ; ?
+        BEQ L1351                   ; Yes
         JSR S17F4
 .L1351
-        LDA missileSprite       ; ZP82
-        STA currentSprite       ; ZP04
-        LDA #$07
-        STA ZP05                ; STL
-        JMP PlotSprite          ; L10EF
+        LDA missileSprite           ; ZP82
+        STA currentSprite           ; ZP04
+        LDA #$07                    ; Colour Yellow
+        STA spriteColour            ; ZP05               
+        JMP PlotSprite              ; L10EF
         ; Return
 
 .L135C
-        LDA Missile1 ; ZP11
+        LDA Missile1                ; ZP11
         BEQ L130C
         JMP L130D
         ; Return
@@ -822,110 +821,110 @@ NOP
 ; UpdateMissile2 ; S1363
 ;----------------------------------------------------------------------------
 .UpdateMissile2 
-        LDA MissileFrameRate    ; ZP13
-        CMP #$01                ; Odd frame rate?
-        BEQ L136A               ; Yes then branch
+        LDA MissileFrameRate        ; ZP13
+        CMP #$01                    ; Odd frame rate?
+        BEQ L136A                   ; Yes then branch
 .L1369
-        RTS                     ; Exit
+        RTS                         ; Exit
 
 .L136A
-        LDA Missile2            ; ZP12
-        BEQ L1369               ; Exit
-        LDA shipSize            ; ZP08
-        CMP #$02                ; Double Ship?
-        BEQ L1375               ; Yes so branch
-        RTS                     ; Exit
+        LDA Missile2                ; ZP12
+        BEQ L1369                   ; Exit
+        LDA shipSize                ; ZP08
+        CMP #$02                    ; Double Ship?
+        BEQ L1375                   ; Yes so branch
+        RTS                         ; Exit
 
 .L1375
-        LDA missileYPos         ; ZP86
-        STA spriteYPos          ; ZP03
-        LDA missileXPos         ; ZP84
-        CMP #$9F                ; ?
-        BEQ L13A1               ; Yes then branch
-        STA spriteXPos          ; ZP02
-        JSR GetCharacter        ; S1102
-        CMP ZP87                ; Missile sprite?
+        LDA missileYPos             ; ZP86
+        STA spriteYPos              ; ZP03
+        LDA missileXPos             ; ZP84
+        CMP #$9F                    ; ?
+        BEQ L13A1                   ; Yes then branch
+        STA spriteXPos              ; ZP02
+        JSR GetCharacter            ; S1102
+        CMP ZP87                    ; Missile sprite?
         BEQ L138F
         CMP ZP88
         BEQ L139D
         JSR S17FD
 .L138F
         LDA ZP88
-        STA currentSprite       ; ZP04
-        LDA #$07
-        STA ZP05
-        JSR PlotSprite          ; L10EF
+        STA currentSprite           ; ZP04
+        LDA #$07                    ; Colour Yellow
+        STA spriteColour            ; ZP05
+        JSR PlotSprite              ; L10EF
         JMP L13A1
 
 .L139D
-        LDA #BLANK              ; SPACE
-        STA (ZP00),Y            ; Plot to screen address
+        LDA #BLANK                  ; SPACE
+        STA (screenAddr),Y          ; Plot to screen address
 .L13A1
         LDA ZP85
-        STA spriteXPos          ; ZP02
+        STA spriteXPos              ; ZP02
         CMP #$9F
         BEQ L13C6
-        JSR GetCharacter        ; S1102
-        CMP ZP87                ; Missile sprite?
+        JSR GetCharacter            ; S1102
+        CMP ZP87                    ; Missile sprite?
         BEQ L13B7
         CMP ZP88
         BEQ L13C2
         JSR S17FD
 .L13B7
         LDA ZP88
-        STA currentSprite       ; ZP04
-        LDA #$07
-        STA ZP05
-        JMP PlotSprite          ; L10EF
+        STA currentSprite           ; ZP04
+        LDA #$07                    ; Colour Yellow
+        STA spriteColour            ; ZP05
+        JMP PlotSprite              ; L10EF
 
 .L13C2
-        LDA #BLANK              ; SPACE
-        STA (ZP00),Y            ; Plot to screen address
+        LDA #BLANK                  ; SPACE
+        STA (screenAddr),Y          ; Plot to screen address
 .L13C6
-        DEC missileYPos         ; ZP86
-        LDA missileYPos         ; ZP86
+        DEC missileYPos             ; ZP86
+        LDA missileYPos             ; ZP86
         CMP #$00
         BNE L13D3
         LDA #$00
-        STA Missile2            ; ZP12
-        RTS                     ; Return
+        STA Missile2                ; ZP12
+        RTS                         ; Return
 
 .L13D3
-        STA spriteYPos          ; ZP03
+        STA spriteYPos              ; ZP03
         LDA ZP85
         CMP #$9F
         BEQ L13F4
-        JSR GetCharacter        ; S1102
-        CMP #BLANK              ; SPACE
+        JSR GetCharacter            ; S1102
+        CMP #BLANK                  ; SPACE
         BEQ L13E9
         CMP #$00
         BEQ L13E9
         JSR S1806
 .L13E9
-        LDA ZP87                ; Missile sprite
-        STA currentSprite       ; ZP04
-        LDA #$07
-        STA ZP05
-        JSR PlotSprite          ; L10EF
+        LDA ZP87                    ; Missile sprite
+        STA currentSprite           ; ZP04
+        LDA #$07                    ; Colour Yellow
+        STA spriteColour            ; ZP05
+        JSR PlotSprite              ; L10EF
 .L13F4
-        LDA missileXPos         ; ZP84
+        LDA missileXPos             ; ZP84
         CMP #$9F
         BNE L13FB
-        RTS                     ; Return
+        RTS                         ; Return
 
 .L13FB
-        STA spriteXPos          ; ZP02
-        JSR GetCharacter        ; S1102
+        STA spriteXPos              ; ZP02
+        JSR GetCharacter            ; S1102
         CMP #$00
         BEQ L140B
-        CMP #BLANK              ; SPACE
+        CMP #BLANK                  ; SPACE
         BEQ L140B
         JSR S1806
 .L140B
         LDA ZP87                ; Missile sprite?
         STA currentSprite       ; ZP04
-        LDA #$07
-        STA ZP05
+        LDA #$07                ; Colour Yellow
+        STA spriteColour        ; ZP05
         JMP PlotSprite          ; L10EF
 
 .MissileSoundFX                 ; S1416
@@ -1011,8 +1010,8 @@ NOP
         STA spriteXPos          ; ZP02
         LDA #HUMANOID           ; Humanoid
         STA currentSprite       ; ZP04
-        LDA #$01
-        STA ZP05
+        LDA #$01                ; Colour White
+        STA spriteColour        ; ZP05
         JMP PlotSprite          ; L10EF
         ; Return
 
@@ -1066,14 +1065,14 @@ NOP
         NOP:NOP:NOP             ; Delay?
 
         LDA #BLANK              ; SPACE
-        STA (ZP00),Y            ; Plot to screen address
+        STA (screenAddr),Y            ; Plot to screen address
         DEC spriteYPos          ; ZP03
         JSR GetCharacter        ; S1102
 
         NOP:NOP:NOP             ; Delay?
 
         LDA #BLANK              ; SPACE
-        STA (ZP00),Y            ; Plot to screen address
+        STA (screenAddr),Y            ; Plot to screen address
 
         LDA ZP19
         TAX
@@ -1094,13 +1093,13 @@ NOP
         STA spriteXPos              ; ZP02
         LDA #HUMANOID               ; Humanoid going up
         STA currentSprite           ; ZP04
-        LDA #$01
-        STA ZP05
+        LDA #$01                    ; Colour White
+        STA spriteColour            ; ZP05
         JSR PlotSprite              ; L10EF
-        LDA ZP17
+        LDA alienSprite             ; ZP17
         STA currentSprite           ; ZP04
-        LDA ZP18
-        STA ZP05
+        LDA alienColour             ; ZP18
+        STA spriteColour            ; ZP05
         DEC spriteYPos              ; ZP03 man_y = man_y - 1
         JMP PlotSprite              ; L10EF
         ; Return
@@ -1135,19 +1134,19 @@ NOP
         RTS
 
 .L1536
-        CMP #$78        ; ASCII 'x' #$21
+        CMP #$78                ; ASCII 'x' #$21
         BNE L1545
-        LDA #$79        ; ASCII 'y' #$22
+        LDA #$79                ; ASCII 'y' #$22
 .L153C
-        STA currentSprite ; ZP04
-        LDA #$01
-        STA ZP05
-        JMP PlotSprite ; L10EF
+        STA currentSprite       ; ZP04
+        LDA #$01                ; Colour White
+        STA spriteColour        ; ZP05
+        JMP PlotSprite          ; L10EF
 
 .L1545
-        CMP #$79        ; ASCII 'y' #$22
+        CMP #$79                ; ASCII 'y' #$22
         BNE L154E
-        LDA #$7A        ; ASCII 'z' #$23
+        LDA #$7A                ; ASCII 'z' #$23
         JMP L153C
 
 .L154E
@@ -1186,8 +1185,8 @@ NOP
         BEQ L1590
         LDA #HUMANOID           ; #$1A; Humanoid
         STA currentSprite       ; ZP04
-        LDA #$01
-        STA ZP05
+        LDA #$01                ; Colour White
+        STA spriteColour        ; ZP05
         JMP L18CA
         ; Return
 
@@ -1251,8 +1250,8 @@ NOP
         LDA #SKULL              ; Skull coming down
         STA currentSprite       ; ZP04
 
-        LDA #$01
-        STA ZP05
+        LDA #$01                ; Colour White
+        STA spriteColour        ; ZP05
 
         JSR CheckAlienHitShip   ; L19F4
         LDY ZP19
@@ -1317,10 +1316,10 @@ NOP
         LDY #$01
         STY ZP26
 .L1636
-        LDA ($20),Y
-        STA ZP17
-        LDA ZP18
-        STA ZP18                ; Why?
+        LDA (waveAddr),Y
+        STA alienSprite                 ; ZP17
+        LDA alienColour                 ; ZP18
+        STA alienColour                 ; ZP18 - Why?
         JMP L19E2
         ; Return
 
@@ -1371,7 +1370,7 @@ NOP
 
 .L1685
         LDY AlienUnknown2Sprite,X
-        LDA ($20),Y
+        LDA (waveAddr),Y
         ROR A
         ROR A
         ROR A
@@ -1382,7 +1381,7 @@ NOP
 .L1691
         INC AlienUnknown2Sprite,X
         LDY AlienUnknown2Sprite,X
-        LDA ($20),Y
+        LDA (waveAddr),Y
         BNE L16B7
         LDA #$80
         STA AlienUnknown1Sprite,X
@@ -1404,22 +1403,22 @@ NOP
         RTS                     ; Exit
 
 .L16B7
-        STA ZP00
+        STA screenAddr
         AND #$01
         BEQ L16C0
         DEC AlienXPosSprite,X
 .L16C0
-        LDA ZP00
+        LDA screenAddr
         AND #$02
         BEQ L16C9
         INC AlienXPosSprite,X
 .L16C9
-        LDA ZP00
+        LDA screenAddr
         AND #$04
         BEQ L16D2
         DEC AlienYPosSprite,X
 .L16D2
-        LDA ZP00
+        LDA screenAddr
         AND #$08
         BEQ S16DB
         INC AlienYPosSprite,X
@@ -1441,10 +1440,10 @@ NOP
         LDA AlienYPosSprite,X
         STA spriteYPos          ; ZP03
 
-        LDA ZP17                ; 
+        LDA alienSprite         ; ZP17               
         STA currentSprite       ; ZP04
-        LDA ZP18
-        STA ZP05
+        LDA alienColour         ; ZP18   
+        STA spriteColour        ; ZP05
         JMP CheckAlienHitShip   ; L19F4
 
 .S1705
@@ -1484,8 +1483,8 @@ NOP
         RTS                     ; Exit
 
 .S173E
-        STY ZP00
-        ADC ZP00
+        STY screenAddr
+        ADC screenAddr
         TAX
         RTS                     ; Exit
 
@@ -1575,7 +1574,7 @@ NOP
         RTS                     ; Exit
 
 .S17BA
-        STA (ZP00),Y            ; Plot to screen address
+        STA (screenAddr),Y            ; Plot to screen address
         LDY ZP19
         LDA #$14
         RTS                     ; Exit
@@ -1590,8 +1589,8 @@ NOP
 .L17CB
         LDA AlienCtrlSprite,X
         STA currentSprite       ; ZP04
-        LDA #$01
-        STA ZP05
+        LDA #$01                ; Colour White
+        STA spriteColour        ; ZP05
 
         LDA AlienXPosSprite,X
         STA spriteXPos          ; ZP02
@@ -1632,7 +1631,7 @@ NOP
         STA ZP31
 .L180C
         LDA ZP30
-        CMP ZP17
+        CMP alienSprite         ; ZP17
         BEQ L1815
         JMP L1892
         ; Return
@@ -1776,8 +1775,8 @@ NOP
         DEY
         BNE L18E8
         
-        STA ZP20                ; Store $00
-        DEC ZP20                ; ZP20 = $FF
+        STA waveAddr                ; Store $00
+        DEC waveAddr                ; ZP20 = $FF
 
         LDA #$00
         STA ZP23                ; Store $00 in ZP23
@@ -1787,7 +1786,7 @@ NOP
         BNE L1907               ; not 0 then branch
         LDA #$01                ; set to 1
 .L1907
-        STA ZP18                ; must be a value between 1 and 7
+        STA alienColour         ; ZP18 - must be a value between 1 and 7
 
         LDA #$80
         SBC ZP33
@@ -1837,11 +1836,11 @@ NOP
         LDY ZP23
 .L193F
         TYA
-        STA ZP00
+        STA screenAddr
         CLC
         ASL A
         ASL A
-        ADC ZP00
+        ADC screenAddr
         TAX
         LDA AlienUnknown1Sprite,X
         BNE L1953
@@ -2007,11 +2006,11 @@ NOP
         NOP:NOP                 
         NOP:NOP:NOP     
 .L1A1E
-        LDA #$00
-        STA ZP37
+        LDA #$00                ; Colour Black
+        STA shipColour          ; ZP37
 .L1A22
         JSR S11E4
-        DEC ZP37
+        DEC shipColour          ; ZP37
         BNE L1A22
         DEC $0904               ; VIC.VICCRE  ; Sound Volume
         BNE L1A1E
@@ -2030,8 +2029,8 @@ NOP
         DEC livesLeft           ; ZP38
         BEQ L1A43
 
-        LDA #$03
-        STA ZP37
+        LDA #$03                ; Colour Cyan
+        STA shipColour          ; ZP37
         JMP NextLevel           ; L1022
 
 .L1A43  ; Game over
@@ -2066,7 +2065,7 @@ NOP
 ;----------------------------------------------------------------------------
 .DestroyAlien
         STA AlienUnknown1Sprite,X
-        LDA ZP18
+        LDA alienColour         ; ZP18
         AND #$07
         STA ZP3C                ; 0 - 3
         JMP AddScore            ; L1A46
@@ -2091,37 +2090,37 @@ NOP
 ;----------------------------------------------------------------------------
 .S1A80  ; $1B37 ? Pattern Data = $1B38
         LDA #LO(PatternData-1)
-        STA ZP20
+        STA waveAddr
         LDA #HI(PatternData-1)
-        STA ZP21         
+        STA waveAddr+1        
 
         LDA #$00
         STA ZP22
         STA ZP22                ; Duplicate ???
 
-        LDA #$A0
-        STA ZP25
+        LDA #$A0                ;
+        STA ZP25                ;
 
-        LDA #$01
-        STA ZP26
+        LDA #$01                ;
+        STA ZP26                ;
 
-        LDA #$02
-        STA ZP2C
+        LDA #$02                ;
+        STA ZP2C                ;
 
         LDA #$02                ; Not required as A is already #$02
-        STA ZP2A
-        STA ZP2B
+        STA ZP2A                ;
+        STA ZP2B                ;
 
-        LDA #$01
-        STA ZP26
+        LDA #$01                ; Duplicated from line 2105?
+        STA ZP26                ; Duplicated from line 2106?
 
-        LDA #$00
-        STA ZP23
+        LDA #$00                ;
+        STA ZP23                ;
         LDA ZP33                ; Why?
         STA ZP33                ; Why?
 
-        JSR L18E4               ; 
-        RTS                     ; Exit, coukd have used a JMP instead
+        JSR L18E4               ; Could have used a JMP instead
+        RTS                     ; Exit
 
 ;----------------------------------------------------------------------------
 ;
@@ -2164,8 +2163,8 @@ NOP
         LDA #$02
         STA ZP33                ; ?
 
-        LDA #$03
-        STA ZP37                ; ?
+        LDA #$03                ; Colour Cyan
+        STA shipColour          ; ZP37                
         STA livesLeft           ; Number of lives? ; ZP38
         JMP BeginLevel          ; L101F ; jump back to begining of code
         ; Return
