@@ -1373,17 +1373,17 @@ NOP
         JMP L1691
         ; Return
 
-.L1685
+.L1685  ; Read wave data
         LDY AlienUnknown2Sprite,X
-        LDA (waveAddr),Y
-        ROR A
-        ROR A
-        ROR A
-        ROR A
+        LDA (waveAddr),Y                ; First wave data value $33
+        ROR A                           ; $19        
+        ROR A                           ; $8C
+        ROR A                           ; $C6
+        ROR A                           ; Why not just store this $63
         JMP L16B7
         ; Return
 
-.L1691
+.L1691  ; Read Alien Wave Data
         INC AlienUnknown2Sprite,X
         LDY AlienUnknown2Sprite,X
         LDA (waveAddr),Y
@@ -1408,39 +1408,44 @@ NOP
         BEQ L16AD
         RTS                             ; Exit
 
-.L16B7
-        STA screenAddr
-        AND #$01
+.L16B7  ; Alien going left
+        STA screenAddr                  ; Used as temp value
+        AND #$01                        ; %00000001
         BEQ L16C0
         DEC AlienXPosSprite,X
-.L16C0
-        LDA screenAddr
-        AND #$02
+
+.L16C0  ; Alien going right
+        LDA screenAddr                  ; Reload temp value
+        AND #$02                        ; %00000010
         BEQ L16C9
         INC AlienXPosSprite,X
-.L16C9
-        LDA screenAddr
-        AND #$04
+
+.L16C9  ; Alien going up
+        LDA screenAddr                  ; Reload temp value
+        AND #$04                        ; %00000100
         BEQ L16D2
         DEC AlienYPosSprite,X
-.L16D2
-        LDA screenAddr
-        AND #$08
+
+.L16D2  ; Alien going down
+        LDA screenAddr                  ; Reload temp value
+        AND #$08                        ; %00001000
         BEQ S16DB
         INC AlienYPosSprite,X
-.S16DB
-        LDA AlienYPosSprite,X
-        CMP #$15
-        BNE L16E7
-        LDA #$01
-        STA AlienYPosSprite,X
-.L16E7
-        CMP #$00
-        BNE L16F0
 
-        LDA #$14
+.S16DB  ; Alien moves to top
+        LDA AlienYPosSprite,X
+        CMP #$15                        ; %00010101
+        BNE L16E7
+        LDA #$01                        ; row 1
         STA AlienYPosSprite,X
-.L16F0
+
+.L16E7  ; Alien move to bottom
+        CMP #$00                        ; %00000000
+        BNE L16F0
+        LDA #$14                        ; row 20
+        STA AlienYPosSprite,X
+
+.L16F0  ; Update alien position
         LDA AlienXPosSprite,X
         STA spriteXPos                  ; ZP02
         LDA AlienYPosSprite,X
@@ -1451,7 +1456,11 @@ NOP
         LDA alienColour                 ; ZP18   
         STA spriteColour                ; ZP05
         JMP CheckAlienHitShip           ; L19F4
+        ; return
 
+;----------------------------------------------------------------------------
+; 
+;----------------------------------------------------------------------------
 .S1705
         DEC ZP2C
         BNE L1710
@@ -1470,7 +1479,8 @@ NOP
         ASL A                           ;
         ASL A                           ; A = A * 4
         ADC levelPtr                    ; ZP23                        
-        TAY
+        TAY                             ; Transfer A To Y
+
         LDA #$00
         STA AlienXPosSprite,Y
         LDA #$02
@@ -1678,8 +1688,10 @@ NOP
 
         LDA #$22
         STA AlienUnknown2Sprite,X
+
         LDA #$23
         STA AlienCtrlSprite,X
+
         LDA #$F8
         STA $0903                       ; VIC.VICCRD      ; Sound Noise
 
@@ -1990,7 +2002,7 @@ NOP
 .L19E2
         LDY levelPtr                    ; ZP23
         TYA                             ; A contains levelPtr
-        BEQ L19E1                       ; Exit
+        BEQ L19E1                       ; Exit if 0
         JMP L1641
         ; Return
 
