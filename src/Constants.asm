@@ -69,7 +69,7 @@ CYAN                = $03
 MAGENTA             = $04
 GREEN               = $05
 BLUE                = $06
-Yellow              = $07
+YELLOW              = $07
 
 ; Characters used for Beebs Mode7
 BLANK               = $20 ; 

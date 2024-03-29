@@ -105,8 +105,7 @@ ORG &0
 
 .ZP59               SKIP 23 ; DUMMY
 
-.ZP70               SKIP 1
-.ZP71               SKIP 1
+.humanoidAddr       SKIP 16
 
 .ZP72               SKIP 14 ; DUMMY
 
@@ -282,7 +281,7 @@ ORG NATIVE_ADDR
         JSR InitialiseHumanoids         ; S144A
 
         LDA #$00                        ; Set Humanoid Action State to 0 (SAFE)
-        STA ZP71                        ; Already set with InitialiseHumanoids
+        STA humanoidAddr+1              ; Already set with InitialiseHumanoids
 
         LDA #$05                        ;
         STA ZP1A                        ;
@@ -330,7 +329,7 @@ ORG NATIVE_ADDR
         STA screenAddr+1                ; ZP01    
         LDA spriteColour                ; ZP05             
         ;STA (screenAddr),Y             ; Plot to screen address
-        NOP:NOP:NOP                     ; Beeb doesn't use colour map
+        NOP:NOP                         ; Beeb doesn't use colour map
         RTS                             ; Exit
 ;----------------------------------------------------------------------------
 ; GetCharacter ; S1102
@@ -975,9 +974,9 @@ NOP
         LDY #$00
 .L144C
         LDA #ROW_OF_MEN                 ; Row 22 position of Humanoids
-        STA ZP70,Y                      ; Row address
+        STA humanoidAddr,Y              ; Row address
         LDA #$00
-        STA ZP71,Y                      ; Set Humanoid Action State to 0 (SAFE)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 0 (SAFE)
         INY
         INY
         CPY #$0C                        ; 12
@@ -1001,9 +1000,9 @@ NOP
         RTS                             ; Exit
 
 .S146D
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         BNE L1486                       ; Not 0 (SAFE) then branch
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         TYA
         ASL A                           ; A = A * 2
@@ -1030,7 +1029,7 @@ NOP
 
 .L1490
         STY ZP19
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         CMP #$FF                        ; Humanoid Destroyed?
         BNE L149A                       ; No then branch
         RTS                             ; Exit
@@ -1042,7 +1041,7 @@ NOP
         ; Return
 
 .L14A1
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         CMP #ROW_OF_MEN                 ; Row 22 position of Humanoids
         BNE L14BA
         STA spriteYPos                  ; ZP03
@@ -1053,9 +1052,9 @@ NOP
         LDA #BLANK                      ; SPACE
         JSR S17BA
         NOP
-        STA ZP70,Y                      ; Row address
+        STA humanoidAddr,Y              ; Row address
 .L14BA
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         TYA
         ASL A                           ; A = A * 2
@@ -1077,13 +1076,13 @@ NOP
         LDA ZP19
         TAX
         TAY
-        DEC ZP70,X : NOP                ; Handles $00??,X
+        DEC humanoidAddr,X : NOP        ; Handles $00??,X
 
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         CMP #$01                        ; Humanoid going up
         BNE L14ED                       ; !=1 then Humanoid captured
         LDA #$02                        ; Skull falling down
-        STA ZP71,Y                      ; Set Humanoid Action State to 2 (FALLING)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 2 (FALLING)
         RTS
 
 .L14ED  ; Humanoid captured and going up
@@ -1123,7 +1122,7 @@ NOP
         JMP L155F
 
 .L1525
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         TYA
         ASL A                           ; A = A * 2
@@ -1157,18 +1156,18 @@ NOP
 .L1553
         LDA #$FF                        ; Humanoid captured value
         LDY ZP19
-        STA ZP71,Y                      ; Set Humanoid Action State to FF (CAPTURED)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to FF (CAPTURED)
         LDA #BLANK                      ; SPACE
         JMP L153C
 
 .L155F
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         CMP #$04
         BEQ L1567
         RTS
 
 .L1567
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         TYA
         ASL A                           ; A = A * 2
@@ -1179,8 +1178,8 @@ NOP
         LDA ZP19
         TAX
         TAY
-        INC ZP70,X : NOP                ; Handles $00??,X
-        LDA ZP70,Y                      ; Row address
+        INC humanoidAddr,X : NOP        ; Handles $00??,X
+        LDA humanoidAddr,Y              ; Row address
         CMP #$15
         BEQ L1590
         LDA #HUMANOID                   ; #$1A; Humanoid
@@ -1192,7 +1191,7 @@ NOP
 
 .L1590
         LDA #ROW_OF_MEN                 ; Row 22 position of Humanoids
-        STA ZP70,Y                      ; Row address
+        STA humanoidAddr,Y              ; Row address
         LDA #$00
         JMP SaveHumanoid                ; L1A71
 
@@ -1210,7 +1209,7 @@ NOP
 .L15A2
         LDY #$00
 .L15A4
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         CMP #$02
         BNE L15AE
         JSR S15B5
@@ -1222,14 +1221,14 @@ NOP
         RTS                             ; Exit
 
 .S15B5
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         CMP #$01
         BNE L15C1
         LDA #$C0
         STA $0903                       ; VIC.VICCRD  ; Sound Noise
 .L15C1
         STY ZP19
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         TYA
         ASL A                           ; A = A * 2
@@ -1240,9 +1239,9 @@ NOP
         LDA ZP19
         TAY
         TAX
-        INC ZP70,X : NOP                ; Handles $00??,X
+        INC humanoidAddr,X : NOP        ; Handles $00??,X
 
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         CMP #$15                        ; row 21
         BEQ L15F1                       ; Yes
         STA spriteYPos                  ; ZP03
@@ -1259,7 +1258,7 @@ NOP
 
 .L15F1
         LDA #$FF
-        STA ZP71,Y                      ; Set Humanoid Action State to FF (CAPTURED)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to FF (CAPTURED)
         RTS                             ; Exit
 
 .L15F7
@@ -1577,7 +1576,7 @@ NOP
         ASL A                           ; A = A * 2
         TAX
         LDA #$01
-        STA ZP71,X                      ; Set Humanoid Action State to 1 (TAKEN)
+        STA humanoidAddr+1,X            ; Set Humanoid Action State to 1 (TAKEN)
         NOP                             ; Handles $00??,X
         RTS                             ; Exit
 
@@ -1728,7 +1727,7 @@ NOP
 .L1897
         LDY #$00
 .L1899
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         CMP spriteYPos                  ; ZP03
         BEQ L18A6
 .L18A0
@@ -1743,7 +1742,7 @@ NOP
         CMP spriteXPos                  ; ZP02
         BNE L18A0
         LDA #$04
-        STA ZP71,Y                      ; Set Humanoid Action State to 4 (UNKNOWN)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 4 (UNKNOWN)
         JSR S18D2
         LDA #$F8
         STA $0903                       ; VIC.VICCRD      ; Sound Noise
@@ -1754,12 +1753,12 @@ NOP
         EQUB $01,$D0,$05,$A9,$00,$85,$11,$60,$A9,$00,$85,$12,$60
 
 .L18CA
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         JMP PlotSprite                  ; L10EF
         ; Return
 .S18D2
-        LDA ZP70,Y                      ; Row address
+        LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
 
         TYA
@@ -1773,7 +1772,12 @@ NOP
         ; Return
 
 ;----------------------------------------------------------------------------
-;
+; This calculates the correct location of the wave address
+; waveData must be at location $1B38 for this to work
+; Y contains level on start it's 2
+; #$E8 + #$28 = $110 = $10 (LSB)
+; loop again = #$28 + #$10 = #$38 (LSB)
+; waveAddr+1 is already #$1B
 ;----------------------------------------------------------------------------
 .L18E4
         JSR ClearAlienData              ; S19CF returns with A = #$E8
@@ -1878,7 +1882,7 @@ NOP
         BNE L1953
         LDY #$00
 .L195A
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         BEQ L1964
         CMP #$FF
         BEQ L1964
@@ -1899,7 +1903,7 @@ NOP
 .S1975
         LDY #$00
 .L1977
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         BEQ L1997
 .L197C
         INY
@@ -2107,7 +2111,7 @@ NOP
 ; SaveHumanoid ; L1A71
 ;----------------------------------------------------------------------------
 .SaveHumanoid
-        STA ZP71,Y                      ; Set Humanoid Action State to 0 (SAFE)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 0 (SAFE)
         LDA #$14                        ; 20
         STA ZP3C                        ; 
         JMP AddScore                    ; L1A46
@@ -2161,7 +2165,7 @@ NOP
 .L1AB0
         LDY #$00
 .L1AB2
-        LDA ZP71,Y                      ; Get Humanoid Action State
+        LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         CMP #$FF                        ; Humanoid Destroyed?
         BNE L1AC2                       ; No so branch
         INY                             ;
