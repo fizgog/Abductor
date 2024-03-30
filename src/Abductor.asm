@@ -66,7 +66,7 @@ ORG &0
 
 .ZP25               SKIP 1
 .waveSprite         SKIP 1 ; ZP26
-.ZP27               SKIP 1
+.alienIndex         SKIP 1 ; ZP27
 
 .ZP28               SKIP 2 ; DUMMY
 
@@ -97,11 +97,11 @@ ORG &0
 
 .ZP3D               SKIP 3 ; DUMMY
 
-.ZP40               SKIP 1
+.ZP40               SKIP 1      ; Row Address (MSB)
 
 .ZP41               SKIP 23 ; DUMMY
 
-.ZP58               SKIP 1
+.ZP58               SKIP 1      ; Row Address (MSB)
 
 .ZP59               SKIP 23 ; DUMMY
 
@@ -218,7 +218,7 @@ ORG NATIVE_ADDR
         BNE L1069                       ; loop back
 
         LDY #$16
-        LDA #DOTTED_LINE                ; ASCII '-'' 
+        LDA #DOTTED_LINE                ; ASCII '-''
 .L1080  ; dotted line
         STA DOTTED_LINE_ADDRESS,Y       ; STA $1FCD,Y
         DEY
@@ -244,10 +244,12 @@ ORG NATIVE_ADDR
 .L1098  ; Create row lookup addresses?
 
         LDA screenAddr+1                ; ZP01
-        STA ZP58,X : NOP                ; Handles $00??,X
+        NOP                             ; BeebEm cannot do $00??,X
+        STA ZP58,X                      ; Row MSB
 
-        LDA screenAddr
-        STA ZP40,X : NOP                ; Handles $00??,X
+        LDA screenAddr                  ; ZP00
+        NOP                             ; BeebEm cannot do $00??,X
+        STA ZP40,X                      ; Row LSB
 
         CLC                             ; Clear carry
         ADC #SCREEN_WIDTH               ; screen width of Mode 7 = 40
@@ -300,18 +302,16 @@ ORG NATIVE_ADDR
 ; CalcAddress ; S10E0
 ;----------------------------------------------------------------------------
 .CalcAddress
-        LDX spriteYPos                  ; ZP03
+        LDX spriteYPos                  ; ZP03 - sprite row position
         LDY spriteXPos                  ; ZP02 - not used in this function
 
-        ;LDA $0040,X
+        LDA ZP40,X                      ; ZP40 - Row LSB
         NOP                             ; BeebEm cannot do $00??,X
-        LDA ZP40,X
-        STA screenAddr
+        STA screenAddr                  ; ZP00 - Screen LSB
 
-        ;LDA $0058,X
+        LDA ZP58,X                      ; ZP58 - Row MSB
         NOP                             ; BeebEm cannot do $00??,X
-        LDA ZP58,X
-        STA screenAddr+1                ; ZP01
+        STA screenAddr+1                ; ZP01 - Screen MSB
         RTS
 
 ;----------------------------------------------------------------------------
@@ -324,20 +324,21 @@ ORG NATIVE_ADDR
         LDA currentSprite               ; ZP04
         STA (screenAddr),Y              ; Plot to screen address
         LDA screenAddr+1                ; ZP01
-        CLC                             ;
+        CLC                             ; Clear carry
         ADC #$78                        ; Add to 1C makes 9600 colour address
-        STA screenAddr+1                ; ZP01    
-        LDA spriteColour                ; ZP05             
-        ;STA (screenAddr),Y             ; Plot to screen address
+        STA screenAddr+1                ; ZP01
+        LDA spriteColour                ; ZP05
+        ;STA (screenAddr),Y             ; Plot to colour address
         NOP:NOP                         ; Beeb doesn't use colour map
         RTS                             ; Exit
+
 ;----------------------------------------------------------------------------
 ; GetCharacter ; S1102
 ;----------------------------------------------------------------------------
 .GetCharacter
         JSR CalcAddress                 ; S10E0
-        LDA (screenAddr),Y
-        RTS
+        LDA (screenAddr),Y              ; Put Character byte into A
+        RTS                             ; Exit
 
 ;----------------------------------------------------------------------------
 ; Game loop ; L1108
@@ -348,29 +349,29 @@ ORG NATIVE_ADDR
         JSR UpdateMissile               ; S1306
         JSR UpdateMissile2              ; S1363
         JSR ProcessSound1               ; S1421
-        JSR ProcessHumanoid             ; S1489 
+        JSR ProcessHumanoid             ; S1489
         JSR UpdateHumanoid              ; S159B
         JSR ProcessSound2               ; S1603
         JMP L1B00
 ;----------------------------------------------------------------------------
-        BNE GameLoop                    ; This is not used 
+        BNE GameLoop                    ; This is not used
         RTS                             ; This is not used
-;----------------------------------------------------------------------------
-; ProcessKeyboard
-;----------------------------------------------------------------------------
+;-------------------------------------------------------------------------
+; ProcessKeyboard ; S1126
+;-------------------------------------------------------------------------
+; Complete rewrite of keyboard code for the Beeb
+; NOPS added to pad to same size as the orignal game
+;-------------------------------------------------------------------------
 .KeyDataTable
 EQUB keyUp, keyDown, keyLeft, keyRight, keyReturn
 NOP
-
-;-------------------------------------------------------------------------
-; ProcessKeyboard ; S1126
 ;-------------------------------------------------------------------------
 ; playerInput contains the following
 ; up    = 1
 ; down  = 3
 ; left  = 4
 ; right = 8
-; fire  = 80
+; fire  = 10 - NB VIC20 uses 80 for fire
 ;-------------------------------------------------------------------------
 ; On entry  :
 ; On exit   :
@@ -410,11 +411,11 @@ NOP
 ;-------------------------------------------------------------------------
 .KeyboardScanCheck
 {
-	STA sysVIAPortA                     ; select key
-	LDA sysVIAPortA	                    ; read key status
-	ASL A			                    ; shift key status into player input bits
-	ROL playerInput                     ; ZP06
-	RTS				                    ; Exit
+    STA sysVIAPortA                     ; select key
+    LDA sysVIAPortA	                    ; read key status
+    ASL A			                    ; shift key status into player input bits
+    ROL playerInput                     ; ZP06
+    RTS				                    ; Exit
 }
 
 ;----------------------------------------------------------------------------
@@ -500,8 +501,8 @@ NOP
         ; Single ship (full)
         LDA #SINGLE_SHIP                ; + sign maybe single ship
         STA currentSprite               ; ZP04
-        LDA shipColour                  ; ZP37                   
-        STA spriteColour                ; ZP05                
+        LDA shipColour                  ; ZP37
+        STA spriteColour                ; ZP05
         LDA currentPlayerXPos           ; ZP07
         STA spriteXPos                  ; ZP02
         JMP PlotSprite                  ; L10EF
@@ -510,14 +511,14 @@ NOP
 ;----------------------------------------------------------------------------
 ; SingleShip2Chars ; L11CB
 ;----------------------------------------------------------------------------
-.SingleShip2Chars 
-        LDA #SINGLE_SHIPH1              ; '<' left half ship 
+.SingleShip2Chars
+        LDA #SINGLE_SHIPH1              ; '<' left half ship
         STA currentSprite               ; ZP04
-        LDA shipColour                  ; ZP37                    
-        STA spriteColour                ; ZP05               
+        LDA shipColour                  ; ZP37
+        STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
         INC spriteXPos                  ; ZP02
-        LDA #SINGLE_SHIPH2              ; '>' right half ship 
+        LDA #SINGLE_SHIPH2              ; '>' right half ship
         STA currentSprite               ; ZP04
         JMP PlotSprite                  ; L10EF
         ; Return
@@ -537,7 +538,7 @@ NOP
 ;----------------------------------------------------------------------------
 ; Why? Just call ProcessKeyboard, once dissasembled
 ;----------------------------------------------------------------------------
-.S11E7  
+.S11E7
         JSR ProcessKeyboard             ; S1126
         LDA playerInput                 ; Not required as ProcessKeyboard return into playerInput
         RTS
@@ -806,7 +807,7 @@ NOP
         LDA missileSprite               ; ZP82
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
-        STA spriteColour                ; ZP05               
+        STA spriteColour                ; ZP05
         JMP PlotSprite                  ; L10EF
         ; Return
 
@@ -819,7 +820,7 @@ NOP
 ;----------------------------------------------------------------------------
 ; UpdateMissile2 ; S1363
 ;----------------------------------------------------------------------------
-.UpdateMissile2 
+.UpdateMissile2
         LDA MissileFrameRate            ; ZP13
         CMP #$01                        ; Odd frame rate?
         BEQ L136A                       ; Yes then branch
@@ -936,7 +937,7 @@ NOP
 ;----------------------------------------------------------------------------
 ; ProcessSound1 ; S1421
 ;----------------------------------------------------------------------------
-.ProcessSound1 
+.ProcessSound1
         LDA MissileFrameRate            ; ZP13
         CMP #$01
         BEQ L1428
@@ -1021,7 +1022,7 @@ NOP
 ;----------------------------------------------------------------------------
 ; ProcessHumanoid ; S1489
 ;----------------------------------------------------------------------------
-.ProcessHumanoid 
+.ProcessHumanoid
         LDA MissileFrameRate            ; ZP13
         CMP #$01
         BEQ L150B
@@ -1076,7 +1077,7 @@ NOP
         LDA ZP19
         TAX
         TAY
-        DEC humanoidAddr,X : NOP        ; Handles $00??,X
+        DEC humanoidAddr,X : NOP        ; BeebEm cannot do $00??,X
 
         LDA humanoidAddr,Y              ; Row address
         CMP #$01                        ; Humanoid going up
@@ -1115,7 +1116,7 @@ NOP
         STA ZP1A
         JMP L145D
 
-        EQUB $B9,$71,$00
+        EQUB $B9,$71,$00                ; Not used
 .L151E
         CMP #$03
         BEQ L1525
@@ -1178,7 +1179,7 @@ NOP
         LDA ZP19
         TAX
         TAY
-        INC humanoidAddr,X : NOP        ; Handles $00??,X
+        INC humanoidAddr,X : NOP        ; BeebEm cannot do $00??,X
         LDA humanoidAddr,Y              ; Row address
         CMP #$15
         BEQ L1590
@@ -1200,7 +1201,7 @@ NOP
 ;----------------------------------------------------------------------------
 ; UpdateHumanoid ; S159B
 ;----------------------------------------------------------------------------
-.UpdateHumanoid 
+.UpdateHumanoid
         LDA MissileFrameRate            ; ZP13
         CMP #$02
         BEQ L15F7
@@ -1239,7 +1240,7 @@ NOP
         LDA ZP19
         TAY
         TAX
-        INC humanoidAddr,X : NOP        ; Handles $00??,X
+        INC humanoidAddr,X : NOP        ; BeebEm cannot do $00??,X
 
         LDA humanoidAddr,Y              ; Row address
         CMP #$15                        ; row 21
@@ -1262,7 +1263,7 @@ NOP
         RTS                             ; Exit
 
 .L15F7
-        DEC ZP1C                        ; 
+        DEC ZP1C                        ;
         BEQ L15FC                       ; = 0 then branch
         RTS                             ; Exit
 
@@ -1330,9 +1331,9 @@ NOP
 .L1641
         TYA                             ; ZP23 Y = levelPtr
         PHA                             ; Save A
-        ASL A                           ; 
+        ASL A                           ;
         ASL A                           ; A = A * 4
-        JSR S173E                       
+        JSR S173E
         JSR S1651
         PLA                             ; Restore A
         TAY                             ; Transfer to Y
@@ -1341,7 +1342,7 @@ NOP
         RTS                             ; Exit
 
 .S1651
-        STX ZP27
+        STX alienIndex                  ; ZP27
         LDA AlienUnknown1Sprite,X
         BNE L1659
         RTS                             ; Exit
@@ -1353,22 +1354,22 @@ NOP
         ; Return
 
 .L1660
-        LDA AlienXPosSprite,X
+        LDA AlienXPosSprite,X           ; Current Alien xpos
         STA spriteXPos                  ; ZP02
-        LDA AlienYPosSprite,X
+        LDA AlienYPosSprite,X           ; Current Alien ypos
         STA spriteYPos                  ; ZP03
 
         LDA #BLANK                      ; SPACE
         STA currentSprite               ; ZP04
         JSR CheckAlienHitShip           ; L19F4
+       
+        LDX alienIndex                  ; ZP27 - Current Alien
+        INC AlienCtrlSprite,X           ; 
+        LDA AlienCtrlSprite,X           ; 
+        CMP #$03                        ; %00000011
+        BNE L1685                       ;
 
-        ; Alien FrameCount 1,2,3 ?
-        LDX ZP27
-        INC AlienCtrlSprite,X
-        LDA AlienCtrlSprite,X
-        CMP #$03
-        BNE L1685
-        LDA #$01
+        LDA #$01                        ; %00000001
         STA AlienCtrlSprite,X
         JMP L1691
         ; Return
@@ -1376,10 +1377,10 @@ NOP
 .L1685  ; Read wave data
         LDY AlienUnknown2Sprite,X
         LDA (waveAddr),Y                ; First wave data value $33
-        ROR A                           ; $19        
+        ROR A                           ; $19
         ROR A                           ; $8C
         ROR A                           ; $C6
-        ROR A                           ; Why not just store this $63
+        ROR A                           ; $63 
         JMP L16B7
         ; Return
 
@@ -1451,15 +1452,15 @@ NOP
         LDA AlienYPosSprite,X
         STA spriteYPos                  ; ZP03
 
-        LDA alienSprite                 ; ZP17               
+        LDA alienSprite                 ; ZP17
         STA currentSprite               ; ZP04
-        LDA alienColour                 ; ZP18   
+        LDA alienColour                 ; ZP18
         STA spriteColour                ; ZP05
         JMP CheckAlienHitShip           ; L19F4
         ; return
 
 ;----------------------------------------------------------------------------
-; 
+;
 ;----------------------------------------------------------------------------
 .S1705
         DEC ZP2C
@@ -1478,9 +1479,10 @@ NOP
         CLC                             ; Clear Carry
         ASL A                           ;
         ASL A                           ; A = A * 4
-        ADC levelPtr                    ; ZP23                        
+        ADC levelPtr                    ; ZP23
         TAY                             ; Transfer A To Y
 
+        ; Initialse Alien
         LDA #$00
         STA AlienXPosSprite,Y
         LDA #$02
@@ -1500,7 +1502,7 @@ NOP
         RTS                             ; Exit
 
 ;----------------------------------------------------------------------------
-; 
+;
 ;----------------------------------------------------------------------------
 .S173E
         STY screenAddr
@@ -1519,7 +1521,7 @@ NOP
         STA currentSprite               ; ZP04
         JSR PlotSprite                  ; L10EF
 
-        LDX ZP27
+        LDX alienIndex                  ; ZP27
         LDA AlienUnknown2Sprite,X
         JMP L1765
         ; Return
@@ -1587,12 +1589,12 @@ NOP
         TAX
         LDA #$01
         STA humanoidAddr+1,X            ; Set Humanoid Action State to 1 (TAKEN)
-        NOP                             ; Handles $00??,X
+        NOP                             ; BeebEm cannot do $00??,X
         RTS                             ; Exit
 
 .S17B4
         JSR S16DB
-        LDX ZP27
+        LDX alienIndex                  ; ZP27
         RTS                             ; Exit
 
 .S17BA
@@ -1620,7 +1622,7 @@ NOP
         STA spriteYPos                  ; ZP03
 
         JSR PlotSprite                  ; L10EF
-        LDX ZP27
+        LDX alienIndex                  ; ZP27
         DEC AlienCtrlSprite,X
         LDA AlienCtrlSprite,X
         CMP #$1F                        ; %00011111
@@ -1628,7 +1630,7 @@ NOP
         RTS                             ; Exit
 
 .HitAlien                               ; L17EE
-        LDA #$00                        ; 
+        LDA #$00                        ;
         JMP DestroyAlien                ; L1A65
         ; Return
 
@@ -1701,18 +1703,22 @@ NOP
         CMP #$01
         BNE L1876
         LDA #$00
-        STA Missile1                    ; ZP11        ; Reset missile fireing??
-        PLA                             ; Why?
-        PLA                             ; WHY?
+        STA Missile1                    ; ZP11 - Reset missile firing??
+        PLA                             ; ?
+        PLA                             ; ?
         RTS                             ; Exit
 
-        ; Data?
+;----------------------------------------------------------------------------
+        ; Not used
         ; 1858
         EQUB $C9,$02,$D0,$07,$A9,$FF,$85,$84
         ; 1860
-        EQUB $4C,$67,$18,$A9,$FF,$85,$85,$A5,$84,$C9,$FF,$F0,$03,$68,$68,$60
+        EQUB $4C,$67,$18,$A9,$FF,$85,$85,$A5
+        EQUB $84,$C9,$FF,$F0,$03,$68,$68,$60
         ; 1870
         EQUB $A5,$85,$C9,$FF,$D0,$F7
+;----------------------------------------------------------------------------
+
 .L1876
         LDA #$00
         STA Missile2                    ; ZP12
@@ -1761,8 +1767,10 @@ NOP
         JMP L184B
         ; Return
 
-        ; 18BD
+;----------------------------------------------------------------------------
+        ; 18BD - Not Used
         EQUB $01,$D0,$05,$A9,$00,$85,$11,$60,$A9,$00,$85,$12,$60
+;----------------------------------------------------------------------------
 
 .L18CA
         LDA humanoidAddr,Y              ; Row address
@@ -1805,14 +1813,14 @@ NOP
 
         DEY
         BNE L18E8                       ; Loop back
-        
+
         STA waveAddr                    ; Store new wave address
         DEC waveAddr                    ; needs to be waveAddr-1
 
         LDA #$00                        ; Set level pointer to 0
         STA levelPtr                    ; ZP23
 
-        LDA currentLevel                ; ZP33                        
+        LDA currentLevel                ; ZP33
         AND #$07                        ; Change colour every level
         BNE L1907                       ; not "Black" then branch
         LDA #WHITE                      ; Default to White
@@ -2011,7 +2019,7 @@ NOP
 .L19EA  ; Ship characters
         ;EQUB $24,$25,$26,$27,$28,$29,$2A,$2B,$2C,$2D
         ; NB Beeb Sprites won't need to handle halves
-        EQUB SINGLE_SHIP,   SINGLE_SHIPH1, SINGLE_SHIPH2  
+        EQUB SINGLE_SHIP,   SINGLE_SHIPH1, SINGLE_SHIPH2
         EQUB DOUBLE_SHIP1,  DOUBLE_SHIP2,  DOUBLE_SHIP3
         EQUB DOUBLE_SHIPH1, DOUBLE_SHIPH2, DOUBLE_SHIPH3, DOUBLE_SHIPH4
 
@@ -2035,7 +2043,7 @@ NOP
 ;----------------------------------------------------------------------------
 ; LoseLife ; L1A04
 ;----------------------------------------------------------------------------
-.LoseLife 
+.LoseLife
         LDX #$F6
         TXS
         LDA #$00
@@ -2051,8 +2059,8 @@ NOP
         ;STA ProcessKeyboard            ; S1126 ; Turn off keyboard
 
         ; Replaced above with NOP's as Beeb using it's own keyboard code
-        NOP:NOP                 
-        NOP:NOP:NOP     
+        NOP:NOP
+        NOP:NOP:NOP
 .L1A1E
         LDA #BLACK                      ; Colour Black
         STA shipColour                  ; ZP37
@@ -2125,7 +2133,7 @@ NOP
 .SaveHumanoid
         STA humanoidAddr+1,Y            ; Set Humanoid Action State to 0 (SAFE)
         LDA #$14                        ; 20
-        STA ZP3C                        ; 
+        STA ZP3C                        ;
         JMP AddScore                    ; L1A46
         ; Return
 
@@ -2136,12 +2144,12 @@ NOP
 ;----------------------------------------------------------------------------
 ;
 ;----------------------------------------------------------------------------
-.S1A80  
+.S1A80
         ; Point to Wave Data at $1B38
         LDA #LO(waveData-1)
         STA waveAddr
         LDA #HI(waveData-1)
-        STA waveAddr+1        
+        STA waveAddr+1
 
         LDA #$00
         STA ZP22
@@ -2151,7 +2159,7 @@ NOP
         STA ZP25                        ;
 
         LDA #$01                        ;
-        STA waveSprite                  ; ZP26               
+        STA waveSprite                  ; ZP26
 
         LDA #$02                        ;
         STA ZP2C                        ;
@@ -2164,7 +2172,7 @@ NOP
         STA waveSprite                  ; ZP26 - Duplicated from line 2106?
 
         LDA #$00                        ;
-        STA levelPtr                    ; ZP23                
+        STA levelPtr                    ; ZP23
         LDA currentLevel                ; ZP33 - Why?
         STA currentLevel                ; ZP33 - Why?
 
@@ -2181,7 +2189,7 @@ NOP
         CMP #$FF                        ; Humanoid Destroyed?
         BNE L1AC2                       ; No so branch
         INY                             ;
-        INY                             ; 
+        INY                             ;
         CPY #$0C                        ; Check all humanoids
         BNE L1AB2                       ; loop back
 
@@ -2193,7 +2201,7 @@ NOP
         ; Return
 
 ;----------------------------------------------------------------------------
-; 
+;
 ;----------------------------------------------------------------------------
 .L1AC5
         LDA MissileFrameRate            ; ZP13
@@ -2210,10 +2218,10 @@ NOP
 ;----------------------------------------------------------------------------
 .StartGame
         LDA #$02                        ; Start on level 2 - Why?
-        STA currentLevel                ; ZP33               
+        STA currentLevel                ; ZP33
 
         LDA #CYAN                       ; Colour Cyan
-        STA shipColour                  ; ZP37                
+        STA shipColour                  ; ZP37
         STA livesLeft                   ; Number of lives? ; ZP38
         JMP BeginLevel                  ; L101F ; jump back to begining of code
         ; Return
@@ -2270,7 +2278,7 @@ NOP
         CMP #$11                        ;
         BEQ L1B1A                       ;
 .L1B17
-        STA currentLevel                ; ZP33               
+        STA currentLevel                ; ZP33
         RTS                             ; Exit
 
 .L1B1A
@@ -2316,7 +2324,8 @@ NOP
         EQUB $22,$22,$22,$22,$22,$2A,$AA,$89
         EQUB $91,$15,$6A,$A8,$88,$88,$99,$91
         EQUB $55,$51,$98,$88,$88,$A2,$26,$44
-        EQUB $45,$55,$55,$54,$46,$66,$62,$00
+        EQUB $45,$55,$55,$54,$46,$66,$62
+        EQUB $00                        ; Terminator
 
         ;EQUB $0D,$0E,$0F,$0E
         EQUS "2222"                     ; Use Beebs character set
@@ -2324,7 +2333,8 @@ NOP
         EQUB $22,$88,$88,$22,$22,$AA,$66,$AA
         EQUB $66,$66,$66,$64,$45,$11,$91,$91
         EQUB $91,$91,$91,$91,$91,$11,$54,$46
-        EQUB $2A,$88,$88,$88,$88,$88,$A2,$00
+        EQUB $2A,$88,$88,$88,$88,$88,$A2
+        EQUB $00                        ; Terminator
 
         ;EQUB $10,$11,$12,$13
         EQUS "3333"                     ; Use Beebs character set
@@ -2332,7 +2342,8 @@ NOP
         EQUB $44,$44,$62,$22,$2A,$AA,$AA,$AA
         EQUB $AA,$A2,$64,$41,$11,$99,$99,$91
         EQUB $55,$44,$44,$44,$44,$46,$62,$22
-        EQUB $AA,$24,$44,$44,$45,$11,$11,$00
+        EQUB $AA,$24,$44,$44,$45,$11,$11
+        EQUB $00                        ; Terminator
 
         ;EQUB $14,$15,$16,$15
         EQUS "4444"                     ; Use Beebs character set
@@ -2340,7 +2351,8 @@ NOP
         EQUB $8A,$8A,$8A,$8A,$8A,$8A,$8A,$8A
         EQUB $8A,$8A,$8A,$8A,$8A,$8A,$8A,$8A
         EQUB $8A,$89,$11,$11,$11,$11,$19,$88
-        EQUB $88,$88,$82,$22,$26,$44,$11,$00
+        EQUB $88,$88,$82,$22,$26,$44,$11
+        EQUB $00                        ; Terminator
 
         ;EQUB $17,$18,$19,$18
         EQUS "5555"                     ; Use Beebs character set
@@ -2348,14 +2360,16 @@ NOP
         EQUB $88,$A8,$AA,$22,$22,$22,$22,$26
         EQUB $66,$66,$66,$44,$44,$51,$99,$99
         EQUB $98,$88,$89,$15,$44,$44,$44,$45
-        EQUB $55,$55,$55,$54,$66,$66,$66,$00
+        EQUB $55,$55,$55,$54,$66,$66,$66
+        EQUB $00                        ; Terminator
 
 ; Following should load at $1C00
+; Not used by the Beeb, apart from the UpdateHighscore code
 ORG $1C00
 INCLUDE "Fonts.asm"
 
 ;----------------------------------------------------------------------------
-; Beebs Relocation code goes here, needs to be on a page boundary 
+; Beebs Relocation code goes here, needs to be on a page boundary
 ; to make it easier to not relocate the relocator code
 ;----------------------------------------------------------------------------
 ALIGN &100
@@ -2374,17 +2388,17 @@ ALIGN &100
     TXS
 
     LDX #HI(RELOC_START-START)
-	LDY #0
+    LDY #0
 
 .relocloop
-	LDA RELOAD_ADDR,Y
-	STA NATIVE_ADDR,Y
-	INY
-	BNE relocloop
-	INC relocloop+OFFSET+2		        ; PATCHED ADDRESS
-	INC relocloop+OFFSET+5		        ; PATCHED ADDRESS
-	DEX
-	BNE relocloop
+    LDA RELOAD_ADDR,Y
+    STA NATIVE_ADDR,Y
+    INY
+    BNE relocloop
+    INC relocloop+OFFSET+2		        ; PATCHED ADDRESS
+    INC relocloop+OFFSET+5		        ; PATCHED ADDRESS
+    DEX
+    BNE relocloop
 
     ; Switch to mode 7 and initialise
     LDY #0
@@ -2415,7 +2429,7 @@ PRINT
 PRINT "-------------------------------------------------------------------"
 PRINT "Abductor Memory Map"
 PRINT "-------------------------------------------------------------------"
-PRINT "Game loads at     : ", ~RELOAD_ADDR 
+PRINT "Game loads at     : ", ~RELOAD_ADDR
 PRINT "Game relocates to : ", ~NATIVE_ADDR
 PRINT "-------------------------------------------------------------------"
 PRINT "End of ZP   : ", ~endZP
