@@ -33,8 +33,8 @@ ORG &0
 .currentPlayerXPos  SKIP 1 ; ZP07
 .shipSize           SKIP 1 ; ZP08
 .shipFrame          SKIP 1 ; ZP09
-.ZP0A               SKIP 1
-.ZP0B               SKIP 1 ; Used for ship 2 ?
+.ZP0A               SKIP 1 ; Counter?
+.doubleShipSprite   SKIP 1 ; ZP0B
 
 .ZP0C               SKIP 4 ; DUMMY
 
@@ -48,7 +48,7 @@ ORG &0
 .currentPlayerYPos  SKIP 1 ; ZP16
 .alienSprite        SKIP 1 ; ZP17
 .alienColour        SKIP 1 ; ZP18
-.ZP19               SKIP 1
+.humanoidIndex      SKIP 1 ; ZP19
 .ZP1A               SKIP 1
 
 .ZP1B               SKIP 1 ; DUMMY
@@ -71,7 +71,7 @@ ORG &0
 .ZP28               SKIP 2 ; DUMMY
 
 .ZP2A               SKIP 1
-.ZP2B               SKIP 1
+.ZP2B               SKIP 1 ; Only used for STA , so not used?
 .ZP2C               SKIP 1
 
 .ZP2D               SKIP 1 ; DUMMY
@@ -93,33 +93,26 @@ ORG &0
 
 .ZP39               SKIP 3 ; DUMMY
 
-.ZP3C               SKIP 1
+.ZP3C               SKIP 1 ; Used force scoring
 
 .ZP3D               SKIP 3 ; DUMMY
 
-.ZP40               SKIP 1      ; Row Address (MSB)
+.ZP40               SKIP 24      ; Row Address (MSB) 
+.ZP58               SKIP 24      ; Row Address (MSB)
 
-.ZP41               SKIP 23 ; DUMMY
+.humanoidAddr       SKIP 16 ; ZP70 (16 bytes)
 
-.ZP58               SKIP 1      ; Row Address (MSB)
-
-.ZP59               SKIP 23 ; DUMMY
-
-.humanoidAddr       SKIP 16
-
-.ZP72               SKIP 14 ; DUMMY
-
-.ZP80               SKIP 1
-.ZP81               SKIP 1
+.missileSingleXPos  SKIP 1 ; ZP80
+.missileSingleYPos  SKIP 1 ; ZP81
 .missileSprite      SKIP 1 ; ZP82
 .ZP83               SKIP 1
-.missileXPos        SKIP 1 ; ZP84
+.missileDoubleXPos  SKIP 1 ; ZP84
 .ZP85               SKIP 1
-.missileYPos        SKIP 1 ; ZP86
+.missileDoubleYPos  SKIP 1 ; ZP86
 .ZP87               SKIP 1 ; missile sprite ?
 .ZP88               SKIP 1 ; missile sprite ?
 .ZP89               SKIP 1 ; missile sprite ?
-.ZPFF               SKIP 1
+.ZPFF               SKIP 1 ; Not used part from 1 STA
 
 .endZP
 
@@ -156,9 +149,9 @@ ORG NATIVE_ADDR
         ; Return
 
 ;----------------------------------------------------------------------------
-
-        ; L1028 Title data 00000 ABDUCTOR HI:00000
-.L1028
+; TitleData ; L1028 Title data 00000 ABDUCTOR HI:00000
+;----------------------------------------------------------------------------
+.TitleData 
         ; EQUB $B0,$B0,$B0,$B0,$B0               ; 00000
         ; EQUB $20                               ; [SPACE]
         ; EQUB $01,$02,$03,$04,$05,$06,$07,$08   ; ABDUCTOR
@@ -186,7 +179,7 @@ ORG NATIVE_ADDR
 .ScoreHUD
         LDY #$16
 .L1057
-        LDA L1028-1,Y
+        LDA TitleData-1,Y               ; L1028
         STA SCREEN_ADDRESS-1,Y          ; 7C00 Mode 7 screen address
 
         ; VIC 20 Colour Lookup
@@ -286,10 +279,10 @@ ORG NATIVE_ADDR
         STA humanoidAddr+1              ; Already set with InitialiseHumanoids
 
         LDA #$05                        ;
-        STA ZP1A                        ;
+        STA ZP1A                        ; Counter?
 
         LDA #$03                        ;
-        STA ZP1C                        ; ?
+        STA ZP1C                        ; Counter ?
 
         JSR S1A80                       ;
 
@@ -609,16 +602,16 @@ NOP
         BEQ DoubleShip4Chars            ; Yes then branch
 
         LDA #DOUBLE_SHIP1               ; 'A' sprite
-        STA ZP0B
+        STA doubleShipSprite            ; ZP0B
 .L123F
-        LDA ZP0B
+        LDA doubleShipSprite            ; ZP0B
         STA currentSprite               ; ZP04
         LDA shipColour                  ; ZP37
         STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
-        INC ZP0B
+        INC doubleShipSprite            ; ZP0B
         INC spriteXPos                  ; ZP02
-        LDA ZP0B
+        LDA doubleShipSprite            ; ZP0B
         CMP #DOUBLE_SHIP3+1             ; 'D' sprite
         BNE L123F                       ; loop
         RTS
@@ -628,16 +621,16 @@ NOP
 ;----------------------------------------------------------------------------
 .DoubleShip4Chars
         LDA #DOUBLE_SHIPH1              ; * sprite
-        STA ZP0B
+        STA doubleShipSprite            ; ZP0B
 .L1259
-        LDA ZP0B
+        LDA doubleShipSprite            ; ZP0B
         STA currentSprite               ; ZP04
         LDA shipColour                  ; ZP37
         STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
-        INC ZP0B
+        INC doubleShipSprite            ; ZP0B
         INC spriteXPos                  ; ZP02
-        LDA ZP0B
+        LDA doubleShipSprite            ; ZP0B
         CMP #DOUBLE_SHIPH4+1            ;
         BNE L1259                       ; loop
         RTS
@@ -695,17 +688,17 @@ NOP
         NOP:NOP
 
         LDA currentPlayerXPos           ; ZP07
-        STA ZP80                        ;
+        STA missileSingleXPos           ; ZP80                        ;
         LDA currentPlayerYPos           ; ZP16
-        STA ZP81                        ;
-        DEC ZP81                        ;
+        STA missileSingleYPos ; ZP81                        ;
+        DEC missileSingleYPos ; ZP81                        ;
         LDA shipFrame                   ; ZP09
         CMP #$02
         BEQ L12C8
 
         LDA #MISSILE                    ; Missile sprite = "
         STA missileSprite               ; ZP82
-        LDA #$36                        ;
+        LDA #$23                        ; #$36 Missile sprite = # 
 .L12C1
         STA ZP83                        ;
 
@@ -727,13 +720,13 @@ NOP
         NOP:NOP
 
         LDA currentPlayerXPos           ; ZP07
-        STA missileXPos                 ; ZP84
-        DEC missileXPos                 ; ZP84
+        STA missileDoubleXPos           ; ZP84
+        DEC missileDoubleXPos           ; ZP84
         STA ZP85
         INC ZP85
         LDA currentPlayerYPos           ; ZP16
-        STA missileYPos                 ; ZP86
-        DEC missileYPos                 ; ZP86
+        STA missileDoubleYPos           ; ZP86
+        DEC missileDoubleYPos           ; ZP86
 
         ; Frames requires for proper sprites
         LDA shipFrame                   ; ZP09
@@ -765,9 +758,9 @@ NOP
         RTS                             ; Exit UpdateMissile
 
 .L130D
-        LDA ZP80
+        LDA missileSingleXPos           ; ZP80
         STA spriteXPos                  ; ZP02
-        LDA ZP81
+        LDA missileSingleYPos ; ZP81
         STA spriteYPos                  ; ZP03
         JSR GetCharacter                ; S1102
         CMP missileSprite               ; ZP82
@@ -786,8 +779,8 @@ NOP
 .L132E
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
-        DEC ZP81
-        LDA ZP81
+        DEC missileSingleYPos ; ZP81
+        LDA missileSingleYPos ; ZP81
         CMP #$00
         BNE L133F
         LDA #$00
@@ -795,7 +788,7 @@ NOP
         RTS                             ; Exit UpdateMissile
 
 .L133F
-        LDA ZP81
+        LDA missileSingleYPos ; ZP81
         STA spriteYPos                  ; ZP03
         JSR GetCharacter                ; S1102
         CMP #BLANK                      ; SPACE
@@ -836,9 +829,9 @@ NOP
         RTS                             ; Exit
 
 .L1375
-        LDA missileYPos                 ; ZP86
+        LDA missileDoubleYPos           ; ZP86
         STA spriteYPos                  ; ZP03
-        LDA missileXPos                 ; ZP84
+        LDA missileDoubleXPos           ; ZP84
         CMP #$9F                        ; ?
         BEQ L13A1                       ; Yes then branch
         STA spriteXPos                  ; ZP02
@@ -881,8 +874,8 @@ NOP
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
 .L13C6
-        DEC missileYPos                 ; ZP86
-        LDA missileYPos                 ; ZP86
+        DEC missileDoubleYPos           ; ZP86
+        LDA missileDoubleYPos           ; ZP86
         CMP #$00
         BNE L13D3
         LDA #$00
@@ -907,7 +900,7 @@ NOP
         STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
 .L13F4
-        LDA missileXPos                 ; ZP84
+        LDA missileDoubleXPos           ; ZP84
         CMP #$9F
         BNE L13FB
         RTS                             ; Return
@@ -1029,7 +1022,7 @@ NOP
         RTS                             ; Exit
 
 .L1490
-        STY ZP19
+        STY humanoidIndex               ; ZP19
         LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         CMP #$FF                        ; Humanoid Destroyed?
         BNE L149A                       ; No then branch
@@ -1074,7 +1067,7 @@ NOP
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
 
-        LDA ZP19
+        LDA humanoidIndex               ; ZP19
         TAX
         TAY
         DEC humanoidAddr,X : NOP        ; BeebEm cannot do $00??,X
@@ -1156,7 +1149,7 @@ NOP
 
 .L1553
         LDA #$FF                        ; Humanoid captured value
-        LDY ZP19
+        LDY humanoidIndex               ; ZP19
         STA humanoidAddr+1,Y            ; Set Humanoid Action State to FF (CAPTURED)
         LDA #BLANK                      ; SPACE
         JMP L153C
@@ -1176,7 +1169,7 @@ NOP
         LDA #BLANK                      ; SPACE
         STA currentSprite               ; ZP04
         JSR PlotSprite                  ; L10EF
-        LDA ZP19
+        LDA humanoidIndex               ; ZP19
         TAX
         TAY
         INC humanoidAddr,X : NOP        ; BeebEm cannot do $00??,X
@@ -1228,7 +1221,7 @@ NOP
         LDA #$C0
         STA $0903                       ; VIC.VICCRD  ; Sound Noise
 .L15C1
-        STY ZP19
+        STY humanoidIndex               ; ZP19
         LDA humanoidAddr,Y              ; Row address
         STA spriteYPos                  ; ZP03
         TYA
@@ -1237,7 +1230,7 @@ NOP
         LDA #BLANK                      ; SPACE
         STA currentSprite               ; ZP04
         JSR CheckAlienHitShip           ; L19F4
-        LDA ZP19
+        LDA humanoidIndex               ; ZP19
         TAY
         TAX
         INC humanoidAddr,X : NOP        ; BeebEm cannot do $00??,X
@@ -1254,7 +1247,7 @@ NOP
         STA spriteColour                ; ZP05
 
         JSR CheckAlienHitShip           ; L19F4
-        LDY ZP19
+        LDY humanoidIndex               ; ZP19
         RTS                             ; Exit
 
 .L15F1
@@ -1392,15 +1385,15 @@ NOP
 
         LDA #$80                        ; %10000000
         STA AlienUnknown1Sprite,X
-        LDA ZP22
+        LDA ZP22                        ; does nothing
         JSR S1975
 
         INC ZP22
-        LDA ZP22
+        LDA ZP22                        ; 0 - 6?
         CMP #$06
         BNE L16B2
 .L16AD
-        LDA #$00
+        LDA #$00                        ; Reset ZP22
         STA ZP22
         RTS                             ; Exit
 
@@ -1599,7 +1592,7 @@ NOP
 
 .S17BA
         STA (screenAddr),Y              ; Plot to screen address
-        LDY ZP19
+        LDY humanoidIndex               ; ZP19
         LDA #$14
         RTS                             ; Exit
 
@@ -1726,9 +1719,9 @@ NOP
         PLA                             ; Why?
         PLA                             ; Why?
 
-        LDA missileXPos                 ; ZP84
+        LDA missileDoubleXPos           ; ZP84
         STA spriteXPos                  ; ZP02
-        LDA missileYPos                 ; ZP86
+        LDA missileDoubleYPos           ; ZP86
         STA spriteYPos                  ; ZP03
         LDA #BLANK                      ; SPACE
         STA currentSprite               ; ZP04
@@ -2015,8 +2008,9 @@ NOP
         ; Return
 
 ;----------------------------------------------------------------------------
-
-.L19EA  ; Ship characters
+; Ship Collision Data ; L19EA
+;----------------------------------------------------------------------------
+.ShipCollisionData
         ;EQUB $24,$25,$26,$27,$28,$29,$2A,$2B,$2C,$2D
         ; NB Beeb Sprites won't need to handle halves
         EQUB SINGLE_SHIP,   SINGLE_SHIPH1, SINGLE_SHIPH2
@@ -2032,7 +2026,7 @@ NOP
 
         LDY #$09                        ; 9 parts possible parts to ship
 .L19F9
-        CMP L19EA-1,Y
+        CMP ShipCollisionData-1,Y       ; L19EA
         BEQ LoseLife                    ; L1A04
         DEY
         BNE L19F9
@@ -2242,7 +2236,7 @@ NOP
         ; Draw Copyright
         LDY #$0A
 .L1AE8
-        LDA L1B09-1,Y                   ; (C)JCM1982
+        LDA CopyrightData-1,Y           ; L1B09 - (C)JCM1982
         STA COPYRIGHT_ADDRESS,Y         ; STA $1E47,Y
 
         ;LDA #WHITE                     ; Colour White
@@ -2270,7 +2264,10 @@ NOP
         JMP L1AC5
         ; Return
 
-.L1B09  ;
+;----------------------------------------------------------------------------
+; Copyright Data ; L1B09
+;----------------------------------------------------------------------------
+.CopyrightData 
         ;EQUB $A8,$83,$A9,$B1,$B9,$B8,$B2,$8A,$83,$8D
         EQUS "(C)1982JCM"               ; Use Beebs Character Set
 
