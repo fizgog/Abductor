@@ -15,6 +15,30 @@
 ; the Beebs memory location $0900 - $09FF, eventually it will be discarded.
 ; VIC20 Colour mapping is ignored
 
+;----------------------------------------------------------------------------
+; NOTES
+;----------------------------------------------------------------------------
+; humanoidAddr at $70 (2 bytes for each)
+; First byte is character row 
+; Second byte is one of the following: -
+; $00 - SAFE
+; $01 - TAKEN
+; $02 - FALLING (humanoid turned into a skull)
+; $04 - SAVED
+; $FF - DEAD
+;----------------------------------------------------------------------------
+; Alien data at $033C (5 bytes each)
+; First byte is alien xpos
+; Second byte is alien ypos
+; Third byte is ?
+; Forth byte is ?
+; Fifth byte is control byte
+; $00 - Initialise
+; $01
+; $02
+; $03
+;----------------------------------------------------------------------------
+
 NATIVE_ADDR		= &101A		; address at which code will run
 RELOAD_ADDR		= &1100		; address at which code will load
 
@@ -93,7 +117,7 @@ ORG &0
 
 .ZP39NotUsed            SKIP 3 ; ZP39 DUMMY
 
-.ZP3C                   SKIP 1 ; Used for scoring?
+.scoreMultiplyer        SKIP 1 ; ZP3C
 
 .ZP3DNotUsed            SKIP 3 ; ZP3D DUMMY
 
@@ -257,7 +281,7 @@ ORG NATIVE_ADDR
 
         LDA #$02                        ;
         STA shipSize                    ; ZP08 Set to Double ship
-        STA shipFrame                   ; Starts with half frame ZP09
+        STA shipFrame                   ; Starts with 2 char ship ZP09
 
         ; Set player x and y start position to 11,20
         ; dotted line is on row 21
@@ -276,7 +300,7 @@ ORG NATIVE_ADDR
 
         JSR InitialiseHumanoids         ; S144A
 
-        LDA #$00                        ; Set Humanoid Action State to 0 (SAFE)
+        LDA #$00                        ; Set Humanoid Action State to $00 (SAFE)
         STA humanoidAddr+1              ; Already set with InitialiseHumanoids
 
         LDA #$05                        ;
@@ -362,7 +386,7 @@ NOP
 ;-------------------------------------------------------------------------
 ; playerInput contains the following
 ; up    = 1
-; down  = 3
+; down  = 2
 ; left  = 4
 ; right = 8
 ; fire  = 10 - NB VIC20 uses 80 for fire
@@ -415,10 +439,13 @@ NOP
 ;----------------------------------------------------------------------------
 ; UpdatePlayerShip ; S115E
 ;----------------------------------------------------------------------------
+; Bug in game as you cannot protect the first humanoid
+; As you cannot go left far enough
+;----------------------------------------------------------------------------
 .UpdatePlayerShip
         JSR S11E7                       ; Process Keyboard with A containing keypress
-        AND #$04                        ; Right pressed
-        BEQ L117C                       ; Yes then branch
+        AND #KEYPRESS_LEFT              ; $04
+        BEQ L117C                       ; Left pressed, No then branch
         DEC shipFrame                   ; ZP09
         BNE L1170                       ; Exit
         LDA #$02                        ; set single ship to 2 chars
@@ -427,7 +454,7 @@ NOP
         ; Return
 
 .L1170
-        RTS
+        RTS                             ; Exit
 
 .L1171  ; Ship going left
         DEC currentPlayerXPos           ; ZP07
@@ -444,9 +471,9 @@ NOP
 .L117F
         NOP:NOP:NOP                     ; Delay?
 
-        CMP #$03
+        CMP #$03                        ;
         BNE L118D                       ; Exit
-        LDA #$01
+        LDA #$01                        ;
         STA shipFrame                   ; ZP09
         JMP L118E
         ; Return
@@ -457,7 +484,7 @@ NOP
 .L118E  ; Ship moving right
         INC currentPlayerXPos           ; ZP07
         LDA currentPlayerXPos           ; ZP07
-        CMP #$14                        ; 20 screen width
+        CMP #$14                        ; Game play area width
         BNE L1198                       ; No
         DEC currentPlayerXPos           ; ZP07 set back to 19
 
@@ -489,11 +516,11 @@ NOP
         JSR UpdatePlayerShip            ; S115E
 
         LDA shipFrame                   ; ZP09
-        CMP #$02                        ; Ship made of 2 halves?
-        BEQ L11ED                       ; Half ship, and then jumps to SingleShip2Chars ; L11CB
+        CMP #$02                        ; Ship made of 2 chars
+        BEQ L11ED                       ; 2 char ship, and then jumps to SingleShip2Chars ; L11CB
 
-        ; Single ship (full)
-        LDA #SINGLE_SHIP                ; + sign maybe single ship
+        ; Single ship (1 char)
+        LDA #SINGLE_SHIP                ; Use + sign for 1 char single ship 
         STA currentSprite               ; ZP04
         LDA shipColour                  ; ZP37
         STA spriteColour                ; ZP05
@@ -506,13 +533,13 @@ NOP
 ; SingleShip2Chars ; L11CB
 ;----------------------------------------------------------------------------
 .SingleShip2Chars
-        LDA #SINGLE_SHIPH1              ; '<' left half ship
+        LDA #SINGLE_SHIPH1              ; '<' left 2 char ship
         STA currentSprite               ; ZP04
         LDA shipColour                  ; ZP37
         STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
         INC spriteXPos                  ; ZP02
-        LDA #SINGLE_SHIPH2              ; '>' right half ship
+        LDA #SINGLE_SHIPH2              ; '>' right 2 half ship
         STA currentSprite               ; ZP04
         JMP PlotSprite                  ; L10EF
         ; Return
@@ -530,7 +557,7 @@ NOP
         ; Return
 
 ;----------------------------------------------------------------------------
-; Why? Just call ProcessKeyboard, once dissasembled
+; Why? Just call ProcessKeyboard, once fully dissasembled for Beeb
 ;----------------------------------------------------------------------------
 .S11E7
         JSR ProcessKeyboard             ; S1126
@@ -548,15 +575,16 @@ NOP
 .L11F4
         LDA playerInput
         AND #KEYPRESS_RIGHT             ; #$08
-        BEQ L1198
-        JMP L1202
+        BEQ L1198                       ; Right pressed, No then branch to come out of ship movement functions
+        JMP L1202                       ; Ship going right
+        ; Return
 
 .L11FD
         LDA currentPlayerXPos           ; ZP07
         STA spriteXPos                  ; ZP02
-        RTS
+        RTS                             ; Exit
 
-.L1202
+.L1202  ; Ship going right
         INC shipFrame                   ; ZP09
         LDA shipFrame                   ; ZP09
         JMP L117F
@@ -599,7 +627,7 @@ NOP
         DEC spriteXPos                  ; ZP02
 
         LDA shipFrame                   ; ZP09
-        CMP #$02                        ; Half a frame
+        CMP #$02                        ; 2 char ship
         BEQ DoubleShip4Chars            ; Yes then branch
 
         LDA #DOUBLE_SHIP1               ; 'A' sprite
@@ -634,7 +662,7 @@ NOP
         LDA doubleShipSprite            ; ZP0B
         CMP #DOUBLE_SHIPH4+1            ;
         BNE L1259                       ; loop
-        RTS
+        RTS                             ; Exit
 
 ;----------------------------------------------------------------------------
 ; ProcessMissile ; S126F
@@ -691,17 +719,17 @@ NOP
         LDA currentPlayerXPos           ; ZP07
         STA missileXPosSingle           ; ZP80                        ;
         LDA currentPlayerYPos           ; ZP16
-        STA missileYPosSingle ; ZP81                        ;
-        DEC missileYPosSingle ; ZP81                        ;
+        STA missileYPosSingle           ; ZP81                      
+        DEC missileYPosSingle           ; ZP81                      
         LDA shipFrame                   ; ZP09
         CMP #$02
         BEQ L12C8
 
         LDA #MISSILE                    ; Missile sprite = "
-        STA missileSpriteS1 ; ZP82               ; ZP82
+        STA missileSpriteS1             ; ZP82
         LDA #$23                        ; #$36 Missile sprite = # 
 .L12C1
-        STA missileSpriteS2 ; ZP83                        ;
+        STA missileSpriteS2             ; ZP83                       
 
         LDA #$01                        ; Missile 1
         STA Missile1                    ; Set missile fire to $01
@@ -709,9 +737,10 @@ NOP
 
 .L12C8
         LDA #MISSILE                    ; Missile sprite = "
-        STA missileSpriteS1 ; ZP82               ; ZP82
+        STA missileSpriteS1             ; ZP82
         LDA #$24                        ; #$39
         JMP L12C1
+        ; Return
 
 .L12D1
         LDA #$FF                        ; Stop firing
@@ -723,8 +752,8 @@ NOP
         LDA currentPlayerXPos           ; ZP07
         STA missileXPosDouble           ; ZP84
         DEC missileXPosDouble           ; ZP84
-        STA missileSpriteDouble ; ZP85
-        INC missileSpriteDouble ; ZP85
+        STA missileSpriteDouble         ; ZP85
+        INC missileSpriteDouble         ; ZP85
         LDA currentPlayerYPos           ; ZP16
         STA missileYPosDouble           ; ZP86
         DEC missileYPosDouble           ; ZP86
@@ -781,8 +810,8 @@ NOP
 .L132E  ; Clear missile from screen
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
-        DEC missileYPosSingle ; ZP81
-        LDA missileYPosSingle ; ZP81
+        DEC missileYPosSingle           ; ZP81
+        LDA missileYPosSingle           ; ZP81
         CMP #$00
         BNE L133F
         LDA #$00
@@ -852,6 +881,7 @@ NOP
         STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
         JMP L13A1
+        ; Return
 
 .L139D
         LDA #BLANK                      ; SPACE
@@ -873,6 +903,7 @@ NOP
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
         JMP PlotSprite                  ; L10EF
+        ; Return
 
 .L13C2
         LDA #BLANK                      ; SPACE
@@ -923,6 +954,7 @@ NOP
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
         JMP PlotSprite                  ; L10EF
+        ; Return
 
 .MissileSoundFX                         ; S1416
         LDA #$F0                        ; %1111 0000
@@ -974,7 +1006,7 @@ NOP
         LDA #ROW_OF_MEN                 ; Row 22 position of Humanoids
         STA humanoidAddr,Y              ; Row address
         LDA #$00
-        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 0 (SAFE)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to $00 (SAFE)
         INY
         INY
         CPY #$0C                        ; 12
@@ -1078,12 +1110,12 @@ NOP
 
         LDA humanoidAddr,Y              ; Row address
         CMP #$01                        ; Humanoid going up
-        BNE L14ED                       ; !=1 then Humanoid captured
+        BNE L14ED                       ; !=1 then Humanoid taken
         LDA #$02                        ; Skull falling down
-        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 2 (FALLING)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to $02 (FALLING)
         RTS
 
-.L14ED  ; Humanoid captured and going up
+.L14ED  ; Humanoid taken and going up
         STA spriteYPos                  ; ZP03
         TYA
         ASL A                           ; A = A * 2
@@ -1112,12 +1144,17 @@ NOP
         LDA #$08
         STA ZP1A
         JMP L145D
+        ; Return
 
+;----------------------------------------------------------------------------
         EQUB $B9,$71,$00                ; Not used
+;----------------------------------------------------------------------------
+
 .L151E
         CMP #$03
         BEQ L1525
         JMP L155F
+        ; Return
 
 .L1525
         LDA humanoidAddr,Y              ; Row address
@@ -1128,41 +1165,44 @@ NOP
         JSR GetCharacter                ; S1102
         CMP #BLANK                      ; SPACE
         BNE L1536
-        RTS
+        RTS                             ; Exit
 
 .L1536
-        CMP #$78                        ; ASCII 'x' #$21
+        CMP #$78                        ; ASCII 'x', VIC20 value #$21
         BNE L1545
-        LDA #$79                        ; ASCII 'y' #$22
+        LDA #$79                        ; ASCII 'y', VIC20 value #$22
 .L153C
         STA currentSprite               ; ZP04
         LDA #WHITE                      ; Colour White
         STA spriteColour                ; ZP05
         JMP PlotSprite                  ; L10EF
+        ; Return
 
 .L1545
-        CMP #$79                        ; ASCII 'y' #$22
+        CMP #$79                        ; ASCII 'y', VIC20 value #$22
         BNE L154E
-        LDA #$7A                        ; ASCII 'z' #$23
+        LDA #$7A                        ; ASCII 'z', VIC20 value #$23
         JMP L153C
+        ; Return
 
 .L154E
-        CMP #$7A                        ; ASCII 'z' #$23
+        CMP #$7A                        ; ASCII 'z', VIC20 value #$23
         BEQ L1553
-        RTS
+        RTS                             ; Return
 
 .L1553
-        LDA #$FF                        ; Humanoid captured value
+        LDA #$FF                        ; Humanoid DEAD value
         LDY humanoidIndex               ; ZP19
-        STA humanoidAddr+1,Y            ; Set Humanoid Action State to FF (CAPTURED)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to $FF (DEAD)
         LDA #BLANK                      ; SPACE
         JMP L153C
+        ; Return
 
 .L155F
         LDA humanoidAddr+1,Y            ; Get Humanoid Action State
         CMP #$04
         BEQ L1567
-        RTS
+        RTS                             ; Exit
 
 .L1567
         LDA humanoidAddr,Y              ; Row address
@@ -1192,9 +1232,10 @@ NOP
         STA humanoidAddr,Y              ; Row address
         LDA #$00
         JMP SaveHumanoid                ; L1A71
+        ; Return
 
-        RTS
-
+;----------------------------------------------------------------------------
+        RTS                             ; Exit - not used
 ;----------------------------------------------------------------------------
 ; UpdateHumanoid ; S159B
 ;----------------------------------------------------------------------------
@@ -1255,8 +1296,8 @@ NOP
         RTS                             ; Exit
 
 .L15F1
-        LDA #$FF
-        STA humanoidAddr+1,Y            ; Set Humanoid Action State to FF (CAPTURED)
+        LDA #$FF                        ; 
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to $FF (DEAD)
         RTS                             ; Exit
 
 .L15F7
@@ -1585,7 +1626,7 @@ NOP
         ASL A                           ; A = A * 2
         TAX
         LDA #$01
-        STA humanoidAddr+1,X            ; Set Humanoid Action State to 1 (TAKEN)
+        STA humanoidAddr+1,X            ; Set Humanoid Action State to $01 (TAKEN)
         NOP                             ; BeebEm cannot do $00??,X
         RTS                             ; Exit
 
@@ -1758,7 +1799,7 @@ NOP
         CMP spriteXPos                  ; ZP02
         BNE L18A0
         LDA #$04
-        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 4 (UNKNOWN)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to $04 (SAVED)
         JSR S18D2
         LDA #$F8
         STA $0903                       ; VIC.VICCRD      ; Sound Noise
@@ -2053,12 +2094,9 @@ NOP
         STA $0903                       ; VIC.VICCRD  ; Sound Noise
 
         ; Stop keyboard processing
-        ;LDA #$60                       ; RTS
-        ;STA ProcessKeyboard            ; S1126 ; Turn off keyboard
+        LDA #$60                       ; RTS
+        STA ProcessKeyboard            ; S1126 ; Turn off keyboard
 
-        ; Replaced above with NOP's as Beeb using it's own keyboard code
-        NOP:NOP
-        NOP:NOP:NOP
 .L1A1E
         LDA #BLACK                      ; Colour Black
         STA shipColour                  ; ZP37
@@ -2073,12 +2111,8 @@ NOP
 
         JSR S11E4                       ; Plot Ship
 
-        ;LDA #$78                       ; SEI
-        ;STA ProcessKeyboard            ; S1126 ; Turn on keyboard
-
-        ; Replaced above with NOP's as Beeb using it's own keyboard code
-        NOP:NOP
-        NOP:NOP:NOP
+        LDA #$78                        ; SEI
+        STA ProcessKeyboard             ; S1126 ; Turn on keyboard
 
         DEC livesLeft                   ; ZP38
         BEQ L1A43
@@ -2101,16 +2135,16 @@ NOP
 .L1A4A
         INC SCREEN_ADDRESS-1,X          ; increase score by 1
         LDA SCREEN_ADDRESS-1,X
-        CMP #$3A                        ; #$BA A (10) character
+        CMP #$3A                        ; #$BA (10) character
         BNE L1A5C                       ; not reached 9
-        LDA #$30                        ; #$B0  0 character
+        LDA #$30                        ; #$B0 = VIC20 '0' character
         STA SCREEN_ADDRESS-1,X
         DEX                             ; move to next score position
-        BNE L1A4A
+        BNE L1A4A                       ; Loop back 
 .L1A5C
         LDX #$04
-        DEC ZP3C
-        BNE L1A4A
+        DEC scoreMultiplyer             ; ZP3C
+        BNE L1A4A                       ; Loop back
         JMP CheckHighscore              ; L1B1F
         ; Return
 
@@ -2121,7 +2155,7 @@ NOP
         STA AlienUnknown1Sprite,X       ; Set to $00
         LDA alienColour                 ; ZP18
         AND #$07                        ; Colour 0 - 7
-        STA ZP3C                        ; 0 - 7
+        STA scoreMultiplyer             ; ZP3C 
         JMP AddScore                    ; L1A46
         ; Return
 
@@ -2129,9 +2163,9 @@ NOP
 ; SaveHumanoid ; L1A71
 ;----------------------------------------------------------------------------
 .SaveHumanoid
-        STA humanoidAddr+1,Y            ; Set Humanoid Action State to 0 (SAFE)
+        STA humanoidAddr+1,Y            ; Set Humanoid Action State to $00 (SAFE)
         LDA #$14                        ; 20
-        STA ZP3C                        ;
+        STA scoreMultiplyer             ; ZP3C              
         JMP AddScore                    ; L1A46
         ; Return
 
