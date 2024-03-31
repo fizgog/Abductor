@@ -49,22 +49,22 @@ ORG &0
 .alienSprite            SKIP 1 ; ZP17
 .alienColour            SKIP 1 ; ZP18
 .humanoidIndex          SKIP 1 ; ZP19
-.ZP1A                   SKIP 1
+.ZP1A                   SKIP 1 ; Counter?
 
 .ZP1BNotUsed            SKIP 1 ; ZP1B DUMMY
 
-.ZP1C                   SKIP 1
+.ZP1C                   SKIP 1 ; Values 0, 1, 2 or 3
 
 .ZP1DNotUsed            SKIP 3 ; ZP1D DUMMY
 
 .waveAddr               SKIP 2 ; ZP20 + ZP21
 
-.ZP22                   SKIP 1
+.ZP22                   SKIP 1 ; Values between 0 - 6 but does nothing?
 .levelPtr               SKIP 1 ; ZP23
 
 .ZP24NotUsed            SKIP 1 ; ZP24 DUMMY
 
-.ZP25                   SKIP 1
+.ZP25                   SKIP 1 ; Counter?
 .waveSprite             SKIP 1 ; ZP26
 .alienIndex             SKIP 1 ; ZP27
 
@@ -765,11 +765,12 @@ NOP
         STA spriteYPos                  ; ZP03
         JSR GetCharacter                ; S1102
         CMP missileSpriteS1             ; ZP82               
-        BEQ L1323
+        BEQ L1323                       ; Branch to MissileSpriteS2
         CMP missileSpriteS2             ; ZP83
-        BEQ L132E
+        BEQ L132E                       ; Branch to MissileSpriteS1
         JSR S17F4
-.L1323
+
+.L1323  ; Plot single yellow missile (frame2)
         LDA missileSpriteS2             ; ZP83
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
@@ -777,7 +778,7 @@ NOP
         JMP PlotSprite                  ; L10EF
         ; Return
 
-.L132E
+.L132E  ; Clear missile from screen
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
         DEC missileYPosSingle ; ZP81
@@ -789,26 +790,28 @@ NOP
         RTS                             ; Exit UpdateMissile
 
 .L133F
-        LDA missileYPosSingle ; ZP81
+        LDA missileYPosSingle           ; ZP81
         STA spriteYPos                  ; ZP03
         JSR GetCharacter                ; S1102
         CMP #BLANK                      ; SPACE
-        BEQ L1351                       ; Yes
+        BEQ L1351                       ; Yes Plot Missile S1
         CMP #$00                        ; ?
         BEQ L1351                       ; Yes
         JSR S17F4
-.L1351
-        LDA missileSpriteS1 ; ZP82               ; ZP82
+
+.L1351  ; Plot single yellow missile (frame1)
+        LDA missileSpriteS1             ; ZP82
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
         JMP PlotSprite                  ; L10EF
         ; Return
 
-.L135C
+.L135C  ; This section should have gone L130C and before L130D 
+        ; and would have saved on the JMP
         LDA Missile1                    ; ZP11
-        BEQ L130C
-        JMP L130D
+        BEQ L130C                       ; Exit
+        JMP L130D                       ; 
         ; Return
 
 ;----------------------------------------------------------------------------
@@ -1629,6 +1632,7 @@ NOP
         ; Return
 
         RTS                             ; Exit but not used
+
 .S17F4
         STA workSprite                  ; ZP30
         LDA #$01
@@ -1893,7 +1897,7 @@ NOP
 
 .L1954
         LDA ZP2A
-        BNE L1953
+        BNE L1953                       ; Exit if not 0
         LDY #$00
 .L195A
         LDA humanoidAddr+1,Y            ; Get Humanoid Action State
@@ -1980,7 +1984,7 @@ NOP
 ; ClearAlienData ; S19CF
 ;----------------------------------------------------------------------------
 ; Clear alien memory location $03BC - $03FB
-; NB Doesn't clear $033B
+; NB Doesn't clear byte $033B
 ;----------------------------------------------------------------------------
 ; On Exit : A contains $E8
 ;----------------------------------------------------------------------------
@@ -2018,7 +2022,6 @@ NOP
         EQUB DOUBLE_SHIP1,  DOUBLE_SHIP2,  DOUBLE_SHIP3
         EQUB DOUBLE_SHIPH1, DOUBLE_SHIPH2, DOUBLE_SHIPH3, DOUBLE_SHIPH4
 
-
 ;----------------------------------------------------------------------------
 ; CheckAlienHitShip ; L19F4
 ;----------------------------------------------------------------------------
@@ -2039,8 +2042,8 @@ NOP
 ; LoseLife ; L1A04
 ;----------------------------------------------------------------------------
 .LoseLife
-        LDX #$F6
-        TXS
+        LDX #$F6                        ;
+        TXS                             ; Initialise the stack wth $F6 
         LDA #$00
         STA $0900                       ; VIC.VICCRA  ; Sound Bass
         STA $0901                       ; VIC.VICCRB  ; Sound Alto
@@ -2060,15 +2063,15 @@ NOP
         LDA #BLACK                      ; Colour Black
         STA shipColour                  ; ZP37
 .L1A22
-        JSR S11E4
+        JSR S11E4                       ; Plot Ship
         DEC shipColour                  ; ZP37
-        BNE L1A22
+        BNE L1A22                       ; loop back and show ship in different colours
         DEC $0904                       ; VIC.VICCRE  ; Sound Volume
-        BNE L1A1E
+        BNE L1A1E                       ; loop back and show ship in different colours
 
         NOP:NOP                         ; Delay?
 
-        JSR S11E4
+        JSR S11E4                       ; Plot Ship
 
         ;LDA #$78                       ; SEI
         ;STA ProcessKeyboard            ; S1126 ; Turn on keyboard
