@@ -23,96 +23,97 @@ OFFSET			= RELOAD_ADDR - NATIVE_ADDR
 INCLUDE "Constants.asm"
 
 ORG &0
-.screenAddr         SKIP 2 ; ZP01 + ZP02
+.screenAddr             SKIP 2 ; ZP01 + ZP02
 
-.spriteXPos         SKIP 1 ; ZP02
-.spriteYPos         SKIP 1 ; ZP03
-.currentSprite      SKIP 1 ; ZP04
-.spriteColour       SKIP 1 ; ZP05
-.playerInput        SKIP 1 ; ZP06
-.currentPlayerXPos  SKIP 1 ; ZP07
-.shipSize           SKIP 1 ; ZP08
-.shipFrame          SKIP 1 ; ZP09
-.ZP0A               SKIP 1 ; Counter?
-.doubleShipSprite   SKIP 1 ; ZP0B
+.spriteXPos             SKIP 1 ; ZP02
+.spriteYPos             SKIP 1 ; ZP03
+.currentSprite          SKIP 1 ; ZP04
+.spriteColour           SKIP 1 ; ZP05
+.playerInput            SKIP 1 ; ZP06
+.currentPlayerXPos      SKIP 1 ; ZP07
+.shipSize               SKIP 1 ; ZP08
+.shipFrame              SKIP 1 ; ZP09
+.ZP0A                   SKIP 1 ; Counter?
+.doubleShipSprite       SKIP 1 ; ZP0B
 
-.ZP0C               SKIP 4 ; DUMMY
+.ZP0CNotUsed            SKIP 4 ; DUMMY
 
-.MissileFired       SKIP 1 ; ZP10
-.Missile1           SKIP 1 ; ZP11
-.Missile2           SKIP 1 ; ZP12
-.MissileFrameRate   SKIP 1 ; ZP13
+.MissileFired           SKIP 1 ; ZP10
+.Missile1               SKIP 1 ; ZP11
+.Missile2               SKIP 1 ; ZP12
+.MissileFrameRate       SKIP 1 ; ZP13
 
-.ZP14               SKIP 2 ; DUMMY
+.ZP14NotUsed            SKIP 2 ; DUMMY
 
-.currentPlayerYPos  SKIP 1 ; ZP16
-.alienSprite        SKIP 1 ; ZP17
-.alienColour        SKIP 1 ; ZP18
-.humanoidIndex      SKIP 1 ; ZP19
-.ZP1A               SKIP 1
+.currentPlayerYPos      SKIP 1 ; ZP16
+.alienSprite            SKIP 1 ; ZP17
+.alienColour            SKIP 1 ; ZP18
+.humanoidIndex          SKIP 1 ; ZP19
+.ZP1A                   SKIP 1
 
-.ZP1B               SKIP 1 ; DUMMY
+.ZP1BNotUsed            SKIP 1 ; DUMMY
 
-.ZP1C               SKIP 1
+.ZP1C                   SKIP 1
 
-.ZP1D               SKIP 3 ; DUMMY
+.ZP1DNotUsed            SKIP 3 ; DUMMY
 
-.waveAddr           SKIP 2 ; ZP20 + ZP21
+.waveAddr               SKIP 2 ; ZP20 + ZP21
 
-.ZP22               SKIP 1
-.levelPtr           SKIP 1 ; ZP23
+.ZP22                   SKIP 1
+.levelPtr               SKIP 1 ; ZP23
 
-.ZP24               SKIP 1 ; DUMMY
+.ZP24NotUsed            SKIP 1 ; DUMMY
 
-.ZP25               SKIP 1
-.waveSprite         SKIP 1 ; ZP26
-.alienIndex         SKIP 1 ; ZP27
+.ZP25                   SKIP 1
+.waveSprite             SKIP 1 ; ZP26
+.alienIndex             SKIP 1 ; ZP27
 
-.ZP28               SKIP 2 ; DUMMY
+.ZP28NotUsed            SKIP 2 ; DUMMY
 
-.ZP2A               SKIP 1
-.ZP2B               SKIP 1 ; Only used for STA , so not used?
-.ZP2C               SKIP 1
+.ZP2A                   SKIP 1
+.ZP2B                   SKIP 1 ; Only used for STA , so not used?
+.ZP2C                   SKIP 1
 
-.ZP2D               SKIP 1 ; DUMMY
+.ZP2DNotUsed            SKIP 1 ; DUMMY
 
-.ZP2E               SKIP 1
+.ZP2E                   SKIP 1
 
-.ZP2F               SKIP 1 ; DUMMY
+.ZP2FNotUsed            SKIP 1 ; DUMMY
 
-.workSprite         SKIP 1 ; ZP30
-.ZP31               SKIP 1
-.ZP32               SKIP 1
-.currentLevel       SKIP 1 ; ZP33
-.ZP34               SKIP 1
+.workSprite             SKIP 1 ; ZP30
+.ZP31                   SKIP 1
+.ZP32                   SKIP 1
+.currentLevel           SKIP 1 ; ZP33
+.ZP34                   SKIP 1
 
-.ZP35               SKIP 2 ; DUMMY
+.ZP35NotUsed            SKIP 2 ; DUMMY
 
-.shipColour         SKIP 1 ; ZP37
-.livesLeft          SKIP 1 ; ZP38
+.shipColour             SKIP 1 ; ZP37
+.livesLeft              SKIP 1 ; ZP38
 
-.ZP39               SKIP 3 ; DUMMY
+.ZP39NotUsed            SKIP 3 ; DUMMY
 
-.ZP3C               SKIP 1 ; Used force scoring
+.ZP3C                   SKIP 1 ; Used force scoring
 
-.ZP3D               SKIP 3 ; DUMMY
+.ZP3DNotUsed            SKIP 3 ; DUMMY
 
-.ZP40               SKIP 24      ; Row Address (MSB) 
-.ZP58               SKIP 24      ; Row Address (MSB)
+.ZP40                   SKIP 24      ; Row Address (MSB) 
+.ZP58                   SKIP 24      ; Row Address (MSB)
 
-.humanoidAddr       SKIP 16 ; ZP70 (16 bytes)
+.humanoidAddr           SKIP 16 ; ZP70 (16 bytes)
 
-.missileSingleXPos  SKIP 1 ; ZP80
-.missileSingleYPos  SKIP 1 ; ZP81
-.missileSprite      SKIP 1 ; ZP82
-.ZP83               SKIP 1
-.missileDoubleXPos  SKIP 1 ; ZP84
-.ZP85               SKIP 1
-.missileDoubleYPos  SKIP 1 ; ZP86
-.ZP87               SKIP 1 ; missile sprite ?
-.ZP88               SKIP 1 ; missile sprite ?
-.ZP89               SKIP 1 ; missile sprite ?
-.ZPFF               SKIP 1 ; Not used part from 1 STA
+.missileXPosSingle      SKIP 1 ; ZP80
+.missileYPosSingle      SKIP 1 ; ZP81
+.missileSpriteS1        SKIP 1 ; ZP82
+.missileSpriteS2        SKIP 1 ; ZP83
+.missileXPosDouble      SKIP 1 ; ZP84
+.missileSpriteDouble    SKIP 1 ; ZP85
+.missileYPosDouble      SKIP 1 ; ZP86
+.missileWorkSprite      SKIP 1 ; ZP87
+.missileSpriteDbl1      SKIP 1 ; ZP88 - Missile 1 for Double Ship
+.missileSpriteDbl2      SKIP 1 ; ZP89 - Missile 2 for Double Ship
+
+.ZPFF                   SKIP 1 ; Not used part from 1 STA
 
 .endZP
 
@@ -688,19 +689,19 @@ NOP
         NOP:NOP
 
         LDA currentPlayerXPos           ; ZP07
-        STA missileSingleXPos           ; ZP80                        ;
+        STA missileXPosSingle           ; ZP80                        ;
         LDA currentPlayerYPos           ; ZP16
-        STA missileSingleYPos ; ZP81                        ;
-        DEC missileSingleYPos ; ZP81                        ;
+        STA missileYPosSingle ; ZP81                        ;
+        DEC missileYPosSingle ; ZP81                        ;
         LDA shipFrame                   ; ZP09
         CMP #$02
         BEQ L12C8
 
         LDA #MISSILE                    ; Missile sprite = "
-        STA missileSprite               ; ZP82
+        STA missileSpriteS1 ; ZP82               ; ZP82
         LDA #$23                        ; #$36 Missile sprite = # 
 .L12C1
-        STA ZP83                        ;
+        STA missileSpriteS2 ; ZP83                        ;
 
         LDA #$01                        ; Missile 1
         STA Missile1                    ; Set missile fire to $01
@@ -708,8 +709,8 @@ NOP
 
 .L12C8
         LDA #MISSILE                    ; Missile sprite = "
-        STA missileSprite               ; ZP82
-        LDA #$39                        ; ?
+        STA missileSpriteS1 ; ZP82               ; ZP82
+        LDA #$24                        ; #$39
         JMP L12C1
 
 .L12D1
@@ -720,30 +721,30 @@ NOP
         NOP:NOP
 
         LDA currentPlayerXPos           ; ZP07
-        STA missileDoubleXPos           ; ZP84
-        DEC missileDoubleXPos           ; ZP84
-        STA ZP85
-        INC ZP85
+        STA missileXPosDouble           ; ZP84
+        DEC missileXPosDouble           ; ZP84
+        STA missileSpriteDouble ; ZP85
+        INC missileSpriteDouble ; ZP85
         LDA currentPlayerYPos           ; ZP16
-        STA missileDoubleYPos           ; ZP86
-        DEC missileDoubleYPos           ; ZP86
+        STA missileYPosDouble           ; ZP86
+        DEC missileYPosDouble           ; ZP86
 
         ; Frames requires for proper sprites
         LDA shipFrame                   ; ZP09
         CMP #$02
         BEQ L12FD
         LDA #MISSILE                    ; Missile sprite = "
-        STA ZP88
+        STA missileSpriteDbl1           ; ZP88
         LDA #MISSILE                    ; Missile sprite = "
 .L12F6
-        STA ZP89
+        STA missileSpriteDbl2           ; ZP89
         LDA #$01
         STA Missile2                    ; ZP12
         RTS
 
 .L12FD
         LDA #MISSILE                    ; Missile sprite = "
-        STA ZP88
+        STA missileSpriteDbl1           ; ZP88
         LDA #MISSILE                    ; Missile sprite = "
         JMP L12F6
 
@@ -758,18 +759,18 @@ NOP
         RTS                             ; Exit UpdateMissile
 
 .L130D
-        LDA missileSingleXPos           ; ZP80
+        LDA missileXPosSingle           ; ZP80
         STA spriteXPos                  ; ZP02
-        LDA missileSingleYPos ; ZP81
+        LDA missileYPosSingle           ; ZP81
         STA spriteYPos                  ; ZP03
         JSR GetCharacter                ; S1102
-        CMP missileSprite               ; ZP82
+        CMP missileSpriteS1             ; ZP82               
         BEQ L1323
-        CMP ZP83
+        CMP missileSpriteS2             ; ZP83
         BEQ L132E
         JSR S17F4
 .L1323
-        LDA ZP83
+        LDA missileSpriteS2             ; ZP83
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
@@ -779,8 +780,8 @@ NOP
 .L132E
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
-        DEC missileSingleYPos ; ZP81
-        LDA missileSingleYPos ; ZP81
+        DEC missileYPosSingle ; ZP81
+        LDA missileYPosSingle ; ZP81
         CMP #$00
         BNE L133F
         LDA #$00
@@ -788,7 +789,7 @@ NOP
         RTS                             ; Exit UpdateMissile
 
 .L133F
-        LDA missileSingleYPos ; ZP81
+        LDA missileYPosSingle ; ZP81
         STA spriteYPos                  ; ZP03
         JSR GetCharacter                ; S1102
         CMP #BLANK                      ; SPACE
@@ -797,7 +798,7 @@ NOP
         BEQ L1351                       ; Yes
         JSR S17F4
 .L1351
-        LDA missileSprite               ; ZP82
+        LDA missileSpriteS1 ; ZP82               ; ZP82
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
@@ -829,20 +830,20 @@ NOP
         RTS                             ; Exit
 
 .L1375
-        LDA missileDoubleYPos           ; ZP86
+        LDA missileYPosDouble           ; ZP86
         STA spriteYPos                  ; ZP03
-        LDA missileDoubleXPos           ; ZP84
+        LDA missileXPosDouble           ; ZP84
         CMP #$9F                        ; ?
         BEQ L13A1                       ; Yes then branch
         STA spriteXPos                  ; ZP02
         JSR GetCharacter                ; S1102
-        CMP ZP87                        ; Missile sprite?
+        CMP missileWorkSprite           ; ZP87    
         BEQ L138F
-        CMP ZP88
+        CMP missileSpriteDbl1           ; ZP88
         BEQ L139D
         JSR S17FD
 .L138F
-        LDA ZP88
+        LDA missileSpriteDbl1           ; ZP88
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
@@ -853,18 +854,18 @@ NOP
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
 .L13A1
-        LDA ZP85
+        LDA missileSpriteDouble         ; ZP85
         STA spriteXPos                  ; ZP02
         CMP #$9F
         BEQ L13C6
         JSR GetCharacter                ; S1102
-        CMP ZP87                        ; Missile sprite?
+        CMP missileWorkSprite           ; ZP87  
         BEQ L13B7
-        CMP ZP88
+        CMP missileSpriteDbl1           ; ZP88
         BEQ L13C2
         JSR S17FD
 .L13B7
-        LDA ZP88
+        LDA missileSpriteDbl1           ; ZP88
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
@@ -874,8 +875,8 @@ NOP
         LDA #BLANK                      ; SPACE
         STA (screenAddr),Y              ; Plot to screen address
 .L13C6
-        DEC missileDoubleYPos           ; ZP86
-        LDA missileDoubleYPos           ; ZP86
+        DEC missileYPosDouble           ; ZP86
+        LDA missileYPosDouble           ; ZP86
         CMP #$00
         BNE L13D3
         LDA #$00
@@ -884,7 +885,7 @@ NOP
 
 .L13D3
         STA spriteYPos                  ; ZP03
-        LDA ZP85
+        LDA missileSpriteDouble         ; ZP85
         CMP #$9F
         BEQ L13F4
         JSR GetCharacter                ; S1102
@@ -894,13 +895,13 @@ NOP
         BEQ L13E9
         JSR S1806
 .L13E9
-        LDA ZP87                        ; Missile sprite
+        LDA missileWorkSprite           ; ZP87
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
         JSR PlotSprite                  ; L10EF
 .L13F4
-        LDA missileDoubleXPos           ; ZP84
+        LDA missileXPosDouble           ; ZP84
         CMP #$9F
         BNE L13FB
         RTS                             ; Return
@@ -914,7 +915,7 @@ NOP
         BEQ L140B
         JSR S1806
 .L140B
-        LDA ZP87                        ; Missile sprite?
+        LDA missileWorkSprite           ; ZP87
         STA currentSprite               ; ZP04
         LDA #YELLOW                     ; Colour Yellow
         STA spriteColour                ; ZP05
@@ -1719,14 +1720,14 @@ NOP
         PLA                             ; Why?
         PLA                             ; Why?
 
-        LDA missileDoubleXPos           ; ZP84
+        LDA missileXPosDouble           ; ZP84
         STA spriteXPos                  ; ZP02
-        LDA missileDoubleYPos           ; ZP86
+        LDA missileYPosDouble           ; ZP86
         STA spriteYPos                  ; ZP03
         LDA #BLANK                      ; SPACE
         STA currentSprite               ; ZP04
         JSR PlotSprite                  ; L10EF
-        LDA ZP85
+        LDA missileSpriteDouble ; ZP85
         STA spriteXPos                  ; ZP02
         JMP PlotSprite                  ; L10EF
         ; Return
