@@ -36,14 +36,14 @@ ORG &0
 .ZP0A                   SKIP 1 ; Counter?
 .doubleShipSprite       SKIP 1 ; ZP0B
 
-.ZP0CNotUsed            SKIP 4 ; DUMMY
+.ZP0CNotUsed            SKIP 4 ; ZP0C DUMMY
 
 .MissileFired           SKIP 1 ; ZP10
 .Missile1               SKIP 1 ; ZP11
 .Missile2               SKIP 1 ; ZP12
 .MissileFrameRate       SKIP 1 ; ZP13
 
-.ZP14NotUsed            SKIP 2 ; DUMMY
+.ZP14NotUsed            SKIP 2 ; ZP14 DUMMY
 
 .currentPlayerYPos      SKIP 1 ; ZP16
 .alienSprite            SKIP 1 ; ZP17
@@ -51,34 +51,34 @@ ORG &0
 .humanoidIndex          SKIP 1 ; ZP19
 .ZP1A                   SKIP 1
 
-.ZP1BNotUsed            SKIP 1 ; DUMMY
+.ZP1BNotUsed            SKIP 1 ; ZP1B DUMMY
 
 .ZP1C                   SKIP 1
 
-.ZP1DNotUsed            SKIP 3 ; DUMMY
+.ZP1DNotUsed            SKIP 3 ; ZP1D DUMMY
 
 .waveAddr               SKIP 2 ; ZP20 + ZP21
 
 .ZP22                   SKIP 1
 .levelPtr               SKIP 1 ; ZP23
 
-.ZP24NotUsed            SKIP 1 ; DUMMY
+.ZP24NotUsed            SKIP 1 ; ZP24 DUMMY
 
 .ZP25                   SKIP 1
 .waveSprite             SKIP 1 ; ZP26
 .alienIndex             SKIP 1 ; ZP27
 
-.ZP28NotUsed            SKIP 2 ; DUMMY
+.ZP28NotUsed            SKIP 2 ; ZP28 DUMMY
 
 .ZP2A                   SKIP 1
-.ZP2B                   SKIP 1 ; Only used for STA , so not used?
+.ZP2B                   SKIP 1 ; Not used apart from 2 STA's
 .ZP2C                   SKIP 1
 
-.ZP2DNotUsed            SKIP 1 ; DUMMY
+.ZP2DNotUsed            SKIP 1 ; ZP2D DUMMY
 
 .ZP2E                   SKIP 1
 
-.ZP2FNotUsed            SKIP 1 ; DUMMY
+.ZP2FNotUsed            SKIP 1 ; ZP2F DUMMY
 
 .workSprite             SKIP 1 ; ZP30
 .ZP31                   SKIP 1
@@ -86,19 +86,19 @@ ORG &0
 .currentLevel           SKIP 1 ; ZP33
 .ZP34                   SKIP 1
 
-.ZP35NotUsed            SKIP 2 ; DUMMY
+.ZP35NotUsed            SKIP 2 ; ZP35 DUMMY
 
 .shipColour             SKIP 1 ; ZP37
 .livesLeft              SKIP 1 ; ZP38
 
-.ZP39NotUsed            SKIP 3 ; DUMMY
+.ZP39NotUsed            SKIP 3 ; ZP39 DUMMY
 
-.ZP3C                   SKIP 1 ; Used force scoring
+.ZP3C                   SKIP 1 ; Used for scoring?
 
-.ZP3DNotUsed            SKIP 3 ; DUMMY
+.ZP3DNotUsed            SKIP 3 ; ZP3D DUMMY
 
-.ZP40                   SKIP 24      ; Row Address (MSB) 
-.ZP58                   SKIP 24      ; Row Address (MSB)
+.ZP40                   SKIP 24 ; Row Address (MSB) 
+.ZP58                   SKIP 24 ; Row Address (MSB)
 
 .humanoidAddr           SKIP 16 ; ZP70 (16 bytes)
 
@@ -113,7 +113,7 @@ ORG &0
 .missileSpriteDbl1      SKIP 1 ; ZP88 - Missile 1 for Double Ship
 .missileSpriteDbl2      SKIP 1 ; ZP89 - Missile 2 for Double Ship
 
-.ZPFF                   SKIP 1 ; Not used part from 1 STA
+.ZPFF                   SKIP 1 ; Not used apart from 1 STA
 
 .endZP
 
@@ -228,13 +228,13 @@ ORG NATIVE_ADDR
         STA $0904                       ; VIC.VICCRE  ; Aux colour for multimode Lt Yellow
 
         ; VIC Screen is 1C00, but for the Beeb we will use Mode 7 7C00
-        LDA #LO(SCREEN_ADDRESS)
+        LDA #LO(SCREEN_ADDRESS)         ; LSB of $7C00 = $00
         STA screenAddr                  ; ZP00
-        LDA #HI(SCREEN_ADDRESS)
+        LDA #HI(SCREEN_ADDRESS)         ; MSB of $7C00 = $7C
         STA screenAddr+1                ; ZP01
 
-        LDY #$17
-        LDX #$00
+        LDY #$17                        ; loop 16 times
+        LDX #$00                        ; Start index
 .L1098  ; Create row lookup addresses?
 
         LDA screenAddr+1                ; ZP01
@@ -251,11 +251,11 @@ ORG NATIVE_ADDR
         LDA screenAddr+1                ; ZP01
         ADC #$00                        ; Add 0 with carry into high byte
         STA screenAddr+1                ; ZP01 High Byte $7C,$7D,$7E,$7F etc into 0058 onwards
-        INX
-        DEY
+        INX                             ; Next byte
+        DEY                             ; Why not use CPX #$16 and Remove LDY and DEY?
         BNE L1098                       ; loop back
 
-        LDA #$02
+        LDA #$02                        ;
         STA shipSize                    ; ZP08 Set to Double ship
         STA shipFrame                   ; Starts with half frame ZP09
 
@@ -263,10 +263,10 @@ ORG NATIVE_ADDR
         ; dotted line is on row 21
         ; Humanoids are on row 22
         ; VIC screen is 22x23
-        LDA #PLAYER_XPOS                ; 11
+        LDA #PLAYER_XPOS                ; 11 (halfway)
         STA currentPlayerXPos           ; ZP07
 
-        LDA #PLAYER_YPOS                ; 20
+        LDA #PLAYER_YPOS                ; 20 (above dotted line)
         STA currentPlayerYPos           ; ZP16
 
         LDA #$00
@@ -285,7 +285,7 @@ ORG NATIVE_ADDR
         LDA #$03                        ;
         STA ZP1C                        ; Counter ?
 
-        JSR S1A80                       ;
+        JSR InitialiseWaveData          ; S1A80                       ;
 
         NOP:NOP:NOP:NOP                 ; Delay?
 
@@ -2137,10 +2137,11 @@ NOP
         NOP:NOP:NOP:NOP:NOP             ; Why? some sort of filler?
 
 ;----------------------------------------------------------------------------
-;
+; InitialiseWaveData; S1A80
 ;----------------------------------------------------------------------------
-.S1A80
-        ; Point to Wave Data at $1B38
+; ; Point to Wave Data at $1B38
+;----------------------------------------------------------------------------
+.InitialiseWaveData  
         LDA #LO(waveData-1)
         STA waveAddr
         LDA #HI(waveData-1)
